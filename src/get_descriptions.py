@@ -7,6 +7,7 @@ import time
 import datetime
 from multiprocessing.pool import ThreadPool
 from functools import partial
+from util import connect_db
 
 
 requests.adapters.DEFAULT_RETRIES = 2
@@ -35,7 +36,7 @@ def get_next_n(conn, limit=0):
                 AND r.id NOT IN (516716, 802791, 808848, 808853,
                                 821596, 627634, 525063, 661158,
                                 758675, 773487, 808808, 804674,
-                                724355, 795589)
+                                724355, 795589, 808857, 574459)
             LIMIT {}
             """.format(limit)
     cur_report = conn.cursor()
@@ -87,10 +88,7 @@ def get_bug_desc(conn, bug):
     return
 
 if __name__ == "__main__":
-    try:
-        conn = psycopg2.connect("dbname='bugs' user='lucka' host='localhost'")
-    except:
-        print "Unable to connect to the database"
+    conn = connect_db()
 
     cur = conn.cursor()
     cur.execute("""

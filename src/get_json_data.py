@@ -4,6 +4,7 @@ import collections
 import json
 import datetime
 from create_tables import create_all_tables
+from util import connect_db
 
 
 def load_table(conn, json_file):
@@ -42,11 +43,7 @@ def load_table(conn, json_file):
 
 if __name__ == "__main__":
 
-    try:
-        conn = psycopg2.connect("dbname='bugs' user='lucka' host='localhost'")
-    except:
-        print "Unable to connect to the database"
-        exit(1)
+    conn = connect_db()
 
     tables = [
         'reports',
