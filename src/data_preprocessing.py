@@ -96,6 +96,7 @@ def create_temp_table(conn, table):
                 , COUNT(h.id) AS count_val
                 , COALESCE(MAX(h.what) FILTER (WHERE h.when_first = 1 AND b.opening = h.when_created), '') AS initial_val
                 , COALESCE(MAX(h.what) FILTER (WHERE h.when_last = 1), '') AS final_val
+                , COALESCE(MAX(h.when_created) FILTER (WHERE h.when_last = 1), NULL) AS final_when
             FROM base b
                 LEFT JOIN helper h
                     ON b.id = h.id
@@ -127,8 +128,8 @@ def create_final_table(conn, base_table='base', final_table='final'):
                     b.id AS id
                     , b.opening
                     , b.reporter
-                    , b.current_status
-                    , b.current_resolution
+                    , LOWER(TRIM(b.current_status)) AS current_status
+                    , LOWER(TRIM(b.current_resolution)) AS current_resolution
                     , a.count_val AS assigned_to_cnt
                     , a.initial_val AS assigned_to_init
                     , a.final_val AS assigned_to_final
@@ -163,6 +164,7 @@ def create_final_table(conn, base_table='base', final_table='final'):
                     , v.initial_val AS version_init
                     , v.final_val AS version_final
                     , d.descr AS desc_init
+                    , r.final_when AS closing
                 FROM {} b
                     JOIN assigned_to_2 a ON b.id = a.id
                     JOIN bug_status_2 bg ON b.id = bg.id
