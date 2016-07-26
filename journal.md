@@ -90,3 +90,76 @@ The code runs roughly 3 minutes. Table named `final` is created in the database.
 
 ## Data Exploration
 
+- 310,947 bugs in total
+- opening: from 1996-03-11 to 2013-01-01
+- closing: from 1998-08-27 to 2013-01-01
+
+### Reassignments
+
+```
+priority:    6 unique values, 27,319  (8.79%) bugs reassigned
+severity:    7 unique values, 26,028  (8.37%) bugs reassigned
+component: 730 unique values, 67,343 (21.66%) bugs reassigned
+product:    69 unique values, 24,568  (7.90%) bugs reassigned
+```
+
+**Priority** - Most of the time empty, not easily predictable.
+
+**Severity** - Worth trying.
+
+**Component** - Too many unique components, not easily predictable.
+
+**Product** - 69 unique values is still a little bit too much. Try to keep top 7 products ('core', 'firefox', 'thunderbird', 'bugzilla', 'browser', 'webtools', 'psm') and 'other'?
+
+```
+product:     8 unique values, 25,563  (7.89%) bugs reassigned
+```
+
+### Duplicates
+
+26% bug reports end up being closed as duplicates:
+
+```
+fixed         110,143
+duplicate      82,770
+worksforme     47,813
+invalid        34,219
+incomplete     21,548
+wontfix         9,843
+expired         4,593
+moved              14
+                    4
+```
+
+### Resolution Time
+
+- Calculated as `reports.opening` - last(`resolution.when`)
+
+```
+mean  206 days 18:34:58.243462
+std   451 days 15:06:01.450312    
+min     0 days 00:00:00 
+25%     0 days 18:38:06.500000  
+50%    16 days 12:30:30    
+75%   183 days 09:30:08.500000    
+max  4767 days 04:37:06
+```
+
+- We can split the data into buckets based on number of days as follows:
+
+```
+day     0-1 days  14,804
+week    1-7 days  35,255
+month  7-30 days  40,117
+year 30-365 days  82,785
+more   365+ days  53,125
+```
+
+## Data Preparation
+
+- Only keep stuff with description
+- Only keep closed (././.)
+- Get rid of enhancements (Bugzilla allows users to request new features, which technically do not represent real bugs. Therefore, we do not consider reports where the severity attribute is set to enhancement as this category is reserved for feature requests.)
+- Calculate resolution time in days as `reports.opening` - last(`resolution.when`)
+
+### NLP
