@@ -162,4 +162,159 @@ more   365+ days  53,125
 - Get rid of enhancements (Bugzilla allows users to request new features, which technically do not represent real bugs. Therefore, we do not consider reports where the severity attribute is set to enhancement as this category is reserved for feature requests.)
 - Calculate resolution time in days as `reports.opening` - last(`resolution.when`)
 
-### NLP
+## Modeling
+
+### Predict Resolution Time using description
+
+Only look at fixed
+```
+df_fixed = df[df['resolution_final'] == 'fixed']
+```
+
+**Classifier**
+
+```
+df_fixed['duration_bin2'] = pd.qcut(df_fixed['duration_days'], 5)
+df_fixed['duration_bin2'].value_counts()
+[0, 2]         25791
+(123, 4567]    21991
+(30, 123]      21872
+(9, 30]        20664
+(2, 9]         19825
+```
+
+Majority is 23.4060067549% cases in train
+Majority is 23.4456711214% cases in test
+
+```
+nb_model = MultinomialNB()
+accuracy: 0.295177222545
+precision: 0.267809211621
+recall: 0.295177222545
+confusion matrix: 
+ [[2665   53  671  154 2028]
+ [1214   75  547  165 2965]
+ [1936   80  823  183 2408]
+ [1474   68  632  207 2732]
+ [1352   70  535  141 4358]]
+
+rf_model = RandomForestClassifier(n_estimators=20, criterion='gini', 
+                               max_depth=3, max_features='auto', 
+                               bootstrap=True, oob_score=True,
+                               random_state=None, warm_start=False)
+accuracy: 0.251670540383
+precision: 0.170135880347
+recall: 0.251670540383
+confusion matrix: 
+ [[ 742    0    8    3 4818]
+ [ 258    0    2    1 4705]
+ [ 474    1    2    0 4953]
+ [ 323    0    7    1 4782]
+ [ 259    0   10    2 6185]]
+
+gb_model = GradientBoostingClassifier(loss='deviance', learning_rate=0.1, 
+                                   n_estimators=100, subsample=1.0,
+                                   max_depth=3, init=None, 
+                                   random_state=None, max_features=None, 
+                                   verbose=0, max_leaf_nodes=None, warm_start=False)
+accuracy: 0.289221382917
+precision: 0.2719571918
+recall: 0.289221382917
+confusion matrix: 
+ [[1957   41  811   78 2684]
+ [ 769   76  602  101 3418]
+ [1300   64  943  130 2993]
+ [ 935   65  731  131 3251]
+ [ 814   90  607   88 4857]]
+```
+
+**Regressor**
+
+```
+df_fixed['duration_days_log'] = df_fixed['duration_days'].map(lambda x: np.log10(x + 1))
+df_fixed['duration_days_log'].hist()
+```
+
+```
+rf1_model = RandomForestRegressor(n_estimators=20, criterion='mse', 
+                               max_depth=3, max_features='auto', 
+                               bootstrap=True, oob_score=True,
+                               random_state=None, warm_start=False)
+oob score: 0.0390567043731
+r-squared: 0.0356680001073
+```
+
+### Predict Resolution Time using other features
+
+**Classifier**
+
+```
+df_fixed['duration_bin2'] = pd.qcut(df_fixed['duration_days'], 5, labels=[0,1,2,3,4])
+df_fixed['duration_bin2'].value_counts()
+0    25791
+4    21991
+3    21872
+2    20664
+1    19825
+```
+
+Majority is 23.4060067549% cases in train
+Majority is 23.4456711214% cases in test
+
+```
+nb_model = MultinomialNB()
+accuracy: 0.262165891923
+precision: 0.225583691589
+recall: 0.262165891923
+confusion matrix: 
+ [[4833    6   10  346 1261]
+ [3426    6   11  335 1188]
+ [3344    6    8  360 1395]
+ [3355    6    7  398 1664]
+ [3148    6   11  432 1974]]
+
+ rf_model = RandomForestClassifier(n_estimators=20, criterion='gini', 
+                               max_depth=3, max_features='auto', 
+                               bootstrap=True, oob_score=True,
+                               random_state=None, warm_start=False)
+accuracy: 0.287877687391
+precision: 0.181562189074
+recall: 0.287877687391
+confusion matrix: 
+ [[4709    1    0  972  774]
+ [3222    0    0  984  760]
+ [3042    0    0 1091  980]
+ [2874    0    0 1234 1322]
+ [2434    0    0 1153 1984]]
+
+gb_model = GradientBoostingClassifier(loss='deviance', learning_rate=0.1, 
+                                   n_estimators=100, subsample=1.0,
+                                   max_depth=3, init=None, 
+                                   random_state=None, max_features=None, 
+                                   verbose=0, max_leaf_nodes=None, warm_start=False)
+accuracy: 0.297247239977
+precision: 0.262224082459
+recall: 0.297247239977
+confusion matrix: 
+ [[4150   83  110  885 1228]
+ [2677   66  120  914 1189]
+ [2520   54  127 1035 1377]
+ [2197   57  137 1155 1884]
+ [1707   44  107 1026 2687]]
+```
+
+**Regressor**
+
+```
+df_fixed['duration_days_log'] = df_fixed['duration_days'].map(lambda x: np.log10(x + 1))
+df_fixed['duration_days_log'].hist()
+```
+
+```
+rf_model = RandomForestRegressor(n_estimators=20, criterion='mse', 
+                               max_depth=3, max_features='auto', 
+                               bootstrap=True, oob_score=True,
+                               random_state=None, warm_start=False)
+oob score: 0.0734031807501
+r-squared: 0.06963286351
+```
