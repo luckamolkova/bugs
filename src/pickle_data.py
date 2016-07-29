@@ -22,9 +22,7 @@ def prepare_data(df):
 
     # calc resolution time (duration)
     df['duration_days'] = (df['closing'] - df['opening']).apply(lambda x: float(x.days))
-    #df['duration_days'] = df['duration']
     df.drop(['closing', 'opening'], axis=1, inplace=True)
-    # labels=['day','week','month','year','more'])
 
     # is there assignee
     df['assigned_to_init_bool'] = df.pop('assigned_to_init').map(
@@ -119,3 +117,16 @@ if __name__ == '__main__':
     df.to_pickle(pickle_path)
 
     print '{}: nlp data pickled as {}'.format(datetime.datetime.now(), pickle_path)
+
+    # print '{}: loading nlp data from database'.format(datetime.datetime.now())
+    # col_list = '''
+    #     severity_final,
+    #     short_desc_init, desc_init
+    #     '''
+    # df = pd.read_sql_query('select {} from final'.format(col_list), con=engine)
+
+    # print '{}: pickling nlp data'.format(datetime.datetime.now())
+    # pickle_path = '../data/df_nlp_severity.pkl'
+    # df.to_pickle(pickle_path)
+
+    # print '{}: nlp data pickled as {}'.format(datetime.datetime.now(), pickle_path)
