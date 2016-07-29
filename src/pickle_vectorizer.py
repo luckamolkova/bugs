@@ -9,18 +9,18 @@ from sklearn.decomposition import PCA
 
 
 if __name__ == '__main__':
-    df = pd.read_pickle('../data/df.pkl')
+    df = pd.read_pickle('../data/df_nlp.pkl')
     word_list_reduced = pickle.load(open('../data/vocabulary.pkl', 'rb'))
 
     X_all = df['desc_init']
-    y_all = df['duration_bin']
+    y_all = df['resolution_final']
 
     X, X_test, y, y_test = train_test_split(
         X_all, y_all, test_size=0.25, random_state=42)
 
     vectorizer = TfidfVectorizer(input='content', lowercase=True, tokenizer=None,
-                                 stop_words='english', use_idf=True, vocabulary=word_list_reduced,
-                                 token_pattern='(?u)[a-zA-Z]+',)  # default token_pattern='(?u)\b\w\w+\b' '[a-zA-Z]+'
+                                 stop_words='english', use_idf=True, #vocabulary=word_list_reduced,
+                                 max_features=20000, ngram_range=(1,3))  # default token_pattern='(?u)\b\w\w+\b' '[a-zA-Z]+'
     tfidf = vectorizer.fit_transform(X)
     print tfidf.shape
 

@@ -1,7 +1,10 @@
 from __future__ import division
 from sqlalchemy import create_engine
 import pandas as pd
+import scipy
 import datetime
+from sklearn.feature_extraction.text import CountVectorizer
+from collections import OrderedDict
 
 
 def prepare_data(df):
@@ -18,75 +21,84 @@ def prepare_data(df):
     df = df[df['severity_init'] != 'enhancement']
 
     # calc resolution time (duration)
-    df['duration'] = df['closing'] - df['opening']
-    df['duration_days'] = df['duration'].apply(lambda x: float(x.days))
-    df['duration_bin'] = pd.cut(df['duration_days'], bins=[-1, 1, 7, 30, 365, 10000], right=True,
-                                labels=False)
+    df['duration_days'] = (df['closing'] - df['opening']).apply(lambda x: float(x.days))
+    #df['duration_days'] = df['duration']
+    df.drop(['closing', 'opening'], axis=1, inplace=True)
     # labels=['day','week','month','year','more'])
+
     # is there assignee
-    df['assigned_to_init_bool'] = df['assigned_to_init'].map(
+    df['assigned_to_init_bool'] = df.pop('assigned_to_init').map(
         lambda x: 0 if x == '' else 1)
 
-    # bug_status to int
-    bug_status_map = dict({'new': 1, 'unconfirmed': 2, 'assigned': 3,
-                           'resolved': 4, 'verified': 5, 'closed': 6, 'reopened': 7})
-    df['bug_status_init'] = df['bug_status_init'].map(
-        lambda x: bug_status_map[x] if x in bug_status_map.keys() else 0)
-    df['bug_status_final'] = df['bug_status_final'].map(
-        lambda x: bug_status_map[x] if x in bug_status_map.keys() else 0)
+    # bug_status one hot
+    bug_status_vocabulary = ['new', 'unconfirmed', 'assigned',
+                             'resolved', 'verified', 'closed', 'reopened']
+    df = one_hot(df, 'bug_status_init', bug_status_vocabulary)
+    #df = one_hot(df, 'bug_status_final', bug_status_vocabulary)
 
     # count number of initially cced
-    df['cc_init_cnt'] = df['cc_init'].map(lambda x: x.count('@'))
+    df['cc_init_cnt'] = df.pop('cc_init').map(lambda x: x.count('@'))
 
-    # priority to int
-    priority_map = dict({'p1': 1, 'p2': 2, 'p3': 3, 'p4': 4, 'p5': 5})
-    df['priority_init'] = df['priority_init'].map(
-        lambda x: priority_map[x] if x in priority_map.keys() else 0)
-    df['priority_final'] = df['priority_final'].map(
-        lambda x: priority_map[x] if x in priority_map.keys() else 0)
+    # priority one hot
+    priority_vocabulary = ['other', 'p1', 'p2', 'p3', 'p4', 'p5']
+    df = one_hot(df, 'priority_init', priority_vocabulary)
+    #df = one_hot(df, 'priority_final', priority_vocabulary)
 
-    # only keep top products
-    product_map = dict({'core': 1, 'firefox': 2, 'thunderbird': 3,
-                        'bugzilla': 4, 'browser': 5, 'webtools': 6, 'psm': 7})
-    df['top_product_init'] = df['product_init'].map(
-        lambda x: product_map[x] if x in product_map.keys() else 0)
-    df['top_product_final'] = df['product_final'].map(
-        lambda x: product_map[x] if x in product_map.keys() else 0)
+    # product one hot (only keep top few products)
+    product_vocabulary = ['other', 'core', 'firefox', 'thunderbird',
+                          'bugzilla', 'browser', 'webtools', 'psm']
+    df = one_hot(df, 'product_init', product_vocabulary)
+    #df = one_hot(df, 'product_final', product_vocabulary)
 
-    # severity to int
-    severity_map = dict({'trivial': 1, 'minor': 2, 'normal': 3,
-                         'major': 4, 'critical': 5, 'blocker': 6})
-    df['severity_init'] = df['severity_init'].map(
-        lambda x: severity_map[x] if x in severity_map.keys() else 0)
-    df['severity_final'] = df['severity_final'].map(
-        lambda x: severity_map[x] if x in severity_map.keys() else 0)
+    # severity one hot
+    severity_vocabulary = ['other', 'trivial', 'minor', 'normal',
+                           'major', 'critical', 'blocker']
+    df = one_hot(df, 'severity_init', severity_vocabulary)
+    #df = one_hot(df, 'severity_final', severity_vocabulary)
 
-    # version to int
-    version_map = dict({'trunk': 1, 'unspecified': 2, 'other': 3,
-                        'other branch': 4, '2.0 branch': 5, '1.0 branch': 6})
-    df['version_init'] = df['version_init'].map(
-        lambda x: version_map[x] if x in version_map.keys() else 0)
-    df['version_final'] = df['version_final'].map(
-        lambda x: version_map[x] if x in version_map.keys() else 0)
+    # version one hot
+    version_vocabulary = ['other', 'trunk', 'unspecified',
+                          'other branch', '2.0 branch', '1.0 branch']
+    df = one_hot(df, 'version_init', version_vocabulary)
+    #df = one_hot(df, 'version_final', version_vocabulary)
 
     # short_desc_init_wordcnt
-    df['short_desc_init_wordcnt'] = df[
-        'short_desc_init'].map(lambda x: len(x.split()))
+    df['short_desc_init_wordcnt'] = df.pop(
+        'short_desc_init').map(lambda x: len(x.split()))
 
     # desc_wordcnt
-    df['desc_init_wordcnt'] = df['desc_init'].map(lambda x: len(x.split()))
+    df['desc_init_wordcnt'] = df.pop('desc_init').map(lambda x: len(x.split()))
 
+    return df
+
+
+def one_hot(df, colname, vocabulary):
+    cnt_vectorizer = CountVectorizer(vocabulary=vocabulary)
+    data = cnt_vectorizer.fit_transform(df.pop(colname).map(
+        lambda x: x if x in vocabulary else 'other'))
+    colnames = [colname + '_' + x for x in vocabulary]
+    df = pd.concat([
+        df.reset_index(drop=True),
+        pd.DataFrame(data.toarray(), columns=colnames).reset_index(drop=True)],
+        axis=1, join='inner')
     return df
 
 if __name__ == '__main__':
 
-    pd.options.mode.chained_assignment = None #turn off warnings
+    pd.options.mode.chained_assignment = None  # turn off warnings
 
     print '{}: connecting to database'.format(datetime.datetime.now())
     engine = create_engine('postgresql://lucka@localhost:5432/bugs')
 
     print '{}: loading data from database'.format(datetime.datetime.now())
-    df = pd.read_sql_query('select * from final', con=engine)
+    col_list = '''
+        assigned_to_init, bug_status_init, cc_init,
+        priority_init, product_init, severity_init,
+        version_init, short_desc_init, desc_init,
+        opening, closing, resolution_final,
+        component_init, op_sys_init, reporter_bug_cnt
+        '''
+    df = pd.read_sql_query('select {} from final'.format(col_list), con=engine)
 
     print '{}: preparing data'.format(datetime.datetime.now())
     df = prepare_data(df)
@@ -95,4 +107,15 @@ if __name__ == '__main__':
     pickle_path = '../data/df.pkl'
     df.to_pickle(pickle_path)
 
-    print '{}: data pickled as {}'.format(datetime.datetime.now(), pickle_path)
+    print '{}: loading nlp data from database'.format(datetime.datetime.now())
+    col_list = '''
+        opening, closing, resolution_final,
+        short_desc_init, desc_init
+        '''
+    df = pd.read_sql_query('select {} from final'.format(col_list), con=engine)
+
+    print '{}: pickling nlp data'.format(datetime.datetime.now())
+    pickle_path = '../data/df_nlp.pkl'
+    df.to_pickle(pickle_path)
+
+    print '{}: nlp data pickled as {}'.format(datetime.datetime.now(), pickle_path)

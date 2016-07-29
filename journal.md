@@ -318,3 +318,18 @@ rf_model = RandomForestRegressor(n_estimators=20, criterion='mse',
 oob score: 0.0734031807501
 r-squared: 0.06963286351
 ```
+
+## Ran Manually
+
+```
+CREATE TABLE IF NOT EXISTS reporter_bugs AS (
+  SELECT 
+    f1.id AS id
+    , COUNT(f2.id) AS reporter_bug_cnt
+  FROM final f1
+    LEFT OUTER JOIN final f2
+      ON f1.reporter = f2.reporter
+      AND f1.opening > f2.opening
+  GROUP BY f1.id
+);
+```

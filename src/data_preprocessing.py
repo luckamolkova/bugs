@@ -3,6 +3,7 @@ import psycopg2
 import datetime
 from util import connect_db
 
+
 def create_base_table(conn, base_table='base'):
     '''Creates base table.
 
@@ -36,6 +37,7 @@ def create_base_table(conn, base_table='base'):
     cur.execute(query)
     conn.commit()
     return
+
 
 def create_clean_table(conn, table):
     '''Creates cleaned up table.
@@ -107,6 +109,23 @@ def create_temp_table(conn, table):
     conn.commit()
     return
 
+
+def create_reorter_bugs_table():
+    # ```
+    # CREATE TABLE IF NOT EXISTS reporter_bugs AS (
+    #   SELECT
+    #     f1.id AS id
+    #     , COUNT(f2.id) AS reporter_bug_cnt
+    #   FROM final f1
+    #     LEFT OUTER JOIN final f2
+    #       ON f1.reporter = f2.reporter
+    #       AND f1.opening > f2.opening
+    #   GROUP BY f1.id
+    # );
+    # ```
+    pass
+
+
 def create_final_table(conn, base_table='base', final_table='final'):
     '''Creates final table.
 
@@ -118,6 +137,8 @@ def create_final_table(conn, base_table='base', final_table='final'):
     Returns:
         None. Table named `final` is created in database.
     '''
+    create_reorter_bugs_table()
+
     print '{}: creating {} table...'.format(datetime.datetime.now(), final_table)
     cur = conn.cursor()
     query = 'DROP TABLE IF EXISTS {};'.format(final_table)
@@ -165,6 +186,7 @@ def create_final_table(conn, base_table='base', final_table='final'):
                     , v.final_val AS version_final
                     , d.descr AS desc_init
                     , r.final_when AS closing
+                    , rb.reporter_bug_cnt AS reporter_bug_cnt
                 FROM {} b
                     JOIN assigned_to_2 a ON b.id = a.id
                     JOIN bug_status_2 bg ON b.id = bg.id
@@ -178,6 +200,7 @@ def create_final_table(conn, base_table='base', final_table='final'):
                     JOIN short_desc_2 sh ON b.id = sh.id
                     JOIN version_2 v ON b.id = v.id
                     JOIN descriptions d ON b.id = d.id
+                    JOIN reporter_bugs rb ON b.id = rb.id
         );
     """.format(final_table, base_table)
     cur.execute(query)
@@ -189,23 +212,23 @@ if __name__ == "__main__":
     conn = connect_db()
 
     tables = ['assigned_to',
-        'bug_status',
-        'cc',
-        'component',
-        'op_sys',
-        'priority',
-        'product',
-        'resolution',
-        'severity',
-        'short_desc',
-        'version',
-    ]
+              'bug_status',
+              'cc',
+              'component',
+              'op_sys',
+              'priority',
+              'product',
+              'resolution',
+              'severity',
+              'short_desc',
+              'version',
+              ]
 
     create_base_table(conn)
 
-    for table in tables:
-        create_clean_table(conn, table)
-        create_temp_table(conn, table)
+    # for table in tables:
+    #     create_clean_table(conn, table)
+    #     create_temp_table(conn, table)
 
     create_final_table(conn)
 
