@@ -20,11 +20,11 @@ if __name__ == '__main__':
 
     vectorizer = TfidfVectorizer(input='content', lowercase=True, tokenizer=None,
                                  stop_words='english', use_idf=True, #vocabulary=word_list_reduced,
-                                 max_features=20000, ngram_range=(1,3))  # default token_pattern='(?u)\b\w\w+\b' '[a-zA-Z]+'
+                                 max_features=1000, ngram_range=(1,3))  # default token_pattern='(?u)\b\w\w+\b' '[a-zA-Z]+'
     tfidf = vectorizer.fit_transform(X)
     print tfidf.shape
 
-    pickle_path = '../data/tfidf_vectorizer.pkl'
+    pickle_path = '../data/tfidf_vectorizer_1000.pkl'
     with open(pickle_path, 'w') as f:
         pickle.dump(vectorizer, f)
 

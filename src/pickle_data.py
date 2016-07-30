@@ -93,30 +93,33 @@ if __name__ == '__main__':
         assigned_to_init, bug_status_init, cc_init,
         priority_init, product_init, severity_init,
         version_init, short_desc_init, desc_init,
-        opening, closing, resolution_final,
+        opening, closing, severity_final,
         component_init, op_sys_init, reporter_bug_cnt
-        '''
+        ''' #resolution_final
     df = pd.read_sql_query('select {} from final'.format(col_list), con=engine)
 
     print '{}: preparing data'.format(datetime.datetime.now())
     df = prepare_data(df)
 
     print '{}: pickling data'.format(datetime.datetime.now())
-    pickle_path = '../data/df.pkl'
+    pickle_path = '../data/df_severity.pkl'
     df.to_pickle(pickle_path)
 
-    print '{}: loading nlp data from database'.format(datetime.datetime.now())
-    col_list = '''
-        opening, closing, resolution_final,
-        short_desc_init, desc_init
-        '''
-    df = pd.read_sql_query('select {} from final'.format(col_list), con=engine)
+    # DURATION NLP
+    # print '{}: loading nlp data from database'.format(datetime.datetime.now())
+    # col_list = '''
+    #     opening, closing, resolution_final,
+    #     short_desc_init, desc_init
+    #     '''
+    # df = pd.read_sql_query('select {} from final'.format(col_list), con=engine)
 
-    print '{}: pickling nlp data'.format(datetime.datetime.now())
-    pickle_path = '../data/df_nlp.pkl'
-    df.to_pickle(pickle_path)
+    # print '{}: pickling nlp data'.format(datetime.datetime.now())
+    # pickle_path = '../data/df_nlp.pkl'
+    # df.to_pickle(pickle_path)
 
-    print '{}: nlp data pickled as {}'.format(datetime.datetime.now(), pickle_path)
+    # print '{}: nlp data pickled as {}'.format(datetime.datetime.now(), pickle_path)
+
+    # SEVERITY NLP
 
     # print '{}: loading nlp data from database'.format(datetime.datetime.now())
     # col_list = '''
