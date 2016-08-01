@@ -14,7 +14,7 @@ def connect_db():
     return conn
 
 
-def create_features(df):
+def create_features(df, target):
     '''Take the dataframe and make it ready for models.
 
     Args:
@@ -24,9 +24,24 @@ def create_features(df):
         dataframe: modified input dataframe
     '''
 
-    # get rid of enhancements and normal (default)
-    df = df[df['severity_final'] != 'enhancement']
-    df = df[df['severity_final'] != 'normal']
+    if target == 'priority_final':
+        df.drop(['severity_final'], axis=1, inplace=True)
+        # get rid of empty and --
+        df = df[df['priority_final'] != '']
+        df = df[df['priority_final'] != '--']
+
+        # severity_vocabulary = ['other', 'trivial', 'minor', 'normal',
+        #                        'major', 'critical', 'blocker']
+        # df = one_hot(df, 'severity_init', severity_vocabulary)
+
+    if target == 'severity_final':
+        df.drop(['priority_final'], axis=1, inplace=True)
+        # get rid of enhancements and normal (default)
+        df = df[df['severity_final'] != 'enhancement']
+        df = df[df['severity_final'] != 'normal']
+
+        # priority_vocabulary = ['other', 'p1', 'p2', 'p3', 'p4', 'p5']
+        # df = one_hot(df, 'priority_init', priority_vocabulary)
 
     # is there assignee
     df['assigned_to_init_bool'] = df.pop('assigned_to_init').map(
@@ -42,20 +57,13 @@ def create_features(df):
     df['desc_init_wordcnt'] = df['desc_init'].map(lambda x: len(x.split()))
 
     # one hot encodings
-    bug_status_vocabulary = ['new', 'unconfirmed', 'assigned',
-                             'resolved', 'verified', 'closed', 'reopened']
-    df = one_hot(df, 'bug_status_init', bug_status_vocabulary)
-
-    priority_vocabulary = ['other', 'p1', 'p2', 'p3', 'p4', 'p5']
-    df = one_hot(df, 'priority_init', priority_vocabulary)
+    # bug_status_vocabulary = ['new', 'unconfirmed', 'assigned',
+    #                          'resolved', 'verified', 'closed', 'reopened']
+    # df = one_hot(df, 'bug_status_init', bug_status_vocabulary)
 
     product_vocabulary = ['other', 'core', 'firefox', 'thunderbird',
                           'bugzilla', 'browser', 'webtools', 'psm']
     df = one_hot(df, 'product_init', product_vocabulary)
-
-    # severity_vocabulary = ['other', 'trivial', 'minor', 'normal',
-    #                        'major', 'critical', 'blocker']
-    # df = one_hot(df, 'severity_init', severity_vocabulary)
 
     version_vocabulary = ['other', 'trunk', 'unspecified',
                           'other branch', '2.0 branch', '1.0 branch']
