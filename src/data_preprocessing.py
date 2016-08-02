@@ -5,14 +5,14 @@ from util import connect_db
 
 
 def create_base_table(conn, base_table='base'):
-    '''Creates base table.
+    '''Creates base table listing all bugs relevant for project.
 
     Args:
         conn: Psycopg2 connection to PostgreSQL database.
         base_table (string): Name of the base table, defaults to `base`.
 
     Returns:
-        None. Table named `base` is created in database.
+        None. Table is created in database.
     '''
     print '{}: creating {} table...'.format(datetime.datetime.now(), base_table)
     cur = conn.cursor()
@@ -40,14 +40,14 @@ def create_base_table(conn, base_table='base'):
 
 
 def create_clean_table(conn, table):
-    '''Creates cleaned up table.
+    '''Creates cleaned up table - lowercased, trimmed, with empty strings rather than nulls.
 
     Args:
         conn: Psycopg2 connection to PostgreSQL database.
         table (str):  Name of table.
 
     Returns:
-        None.
+        None. Table is created in database.
     '''
     print '{}: creating {}_clean table...'.format(datetime.datetime.now(), table)
     cur = conn.cursor()
@@ -71,7 +71,7 @@ def create_clean_table(conn, table):
 
 
 def create_temp_table(conn, table):
-    '''Creates temporary table.
+    '''Creates temporary table with initial and final values per bug report.
 
     Args:
         conn: Psycopg2 connection to PostgreSQL database.
@@ -110,24 +110,39 @@ def create_temp_table(conn, table):
     return
 
 
-def create_reorter_bugs_table():
-    # ```
-    # CREATE TABLE IF NOT EXISTS reporter_bugs AS (
-    #   SELECT
-    #     f1.id AS id
-    #     , COUNT(f2.id) AS reporter_bug_cnt
-    #   FROM final f1
-    #     LEFT OUTER JOIN final f2
-    #       ON f1.reporter = f2.reporter
-    #       AND f1.opening > f2.opening
-    #   GROUP BY f1.id
-    # );
-    # ```
-    pass
+def create_reporter_bugs_table(conn, reporter_bugs_table='reporter_bugs'):
+    '''Creates table with number of bugs reported.
+
+    Args:
+        conn: Psycopg2 connection to PostgreSQL database.
+        reporter_bugs_table (string): Name of the reporter bug table, defaults to `reporter_bugs`.
+
+    Returns:
+        None. Table is created in database.
+    '''
+    print '{}: creating {} table...'.format(datetime.datetime.now(), reporter_bugs_table)
+    cur = conn.cursor()
+    query = 'DROP TABLE IF EXISTS {};'.format(final_table)
+    cur.execute(query)
+    query = """
+        CREATE TABLE IF NOT EXISTS {} AS (
+          SELECT
+            f1.id AS id
+            , COUNT(f2.id) AS reporter_bug_cnt
+          FROM final f1
+            LEFT OUTER JOIN final f2
+              ON f1.reporter = f2.reporter
+              AND f1.opening > f2.opening
+          GROUP BY f1.id
+        );
+    """.format(reporter_bugs_table)
+    cur.execute(query)
+    conn.commit()
+    return
 
 
 def create_final_table(conn, base_table='base', final_table='final'):
-    '''Creates final table.
+    '''Creates final table with initial and final bug report data.
 
     Args:
         conn: Psycopg2 connection to PostgreSQL database.
@@ -135,9 +150,9 @@ def create_final_table(conn, base_table='base', final_table='final'):
         final_table (string): Name of the final table, defaults to `final`.
 
     Returns:
-        None. Table named `final` is created in database.
+        None. Table is created in database.
     '''
-    create_reorter_bugs_table()
+    create_reporter_bugs_table()
 
     print '{}: creating {} table...'.format(datetime.datetime.now(), final_table)
     cur = conn.cursor()
@@ -226,9 +241,9 @@ if __name__ == "__main__":
 
     create_base_table(conn)
 
-    # for table in tables:
-    #     create_clean_table(conn, table)
-    #     create_temp_table(conn, table)
+    for table in tables:
+        create_clean_table(conn, table)
+        create_temp_table(conn, table)
 
     create_final_table(conn)
 

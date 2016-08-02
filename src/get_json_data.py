@@ -3,8 +3,7 @@ import psycopg2
 import collections
 import json
 import datetime
-from create_tables import create_all_tables
-from util import connect_db
+from util import create_empty_tables, connect_db
 
 
 def load_table(conn, json_file):
@@ -59,7 +58,7 @@ if __name__ == "__main__":
         'short_desc',
         'version',
     ]
-    create_all_tables(conn, tables)
+    create_empty_tables(conn, tables)
 
     for table in tables:
         load_table(conn, table)

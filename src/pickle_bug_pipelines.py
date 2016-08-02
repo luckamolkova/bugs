@@ -21,11 +21,10 @@ if __name__ == '__main__':
         component_init, op_sys_init, reporter_bug_cnt,
         desc_init, short_desc_init,
         priority_final, severity_final
-        ''' #priority_init, severity_init, bug_status_init
+        '''
     df_original = pd.read_sql_query('select {} from final'.format(col_list), con=conn)
 
-    # for target in ['priority_final', 'severity_final']:
-    for target in ['priority_final']:
+    for target in ['priority_final', 'severity_final']:
         df = df_original.copy(deep=True)
 
         # Feature engineering
@@ -45,6 +44,6 @@ if __name__ == '__main__':
         print '{}: predicting for {}'.format(datetime.datetime.now(), target)
         pipeline.predict(X_test, y_test)
 
-        # pickle_path = '../data/{}_pipeline.pkl'.format(target)
-        # with open(pickle_path, 'w') as f:
-        #     pickle.dump(pipeline, f)
+        pickle_path = '../data/{}_pipeline.pkl'.format(target)
+        with open(pickle_path, 'w') as f:
+            pickle.dump(pipeline, f)

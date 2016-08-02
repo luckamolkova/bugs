@@ -7,12 +7,13 @@ from sklearn.naive_bayes import MultinomialNB
 from sklearn.ensemble import GradientBoostingClassifier, RandomForestClassifier
 from sklearn.metrics import classification_report
 from sklearn.cross_validation import KFold
-import pickle
 
 
 class BugPipeline(object):
 
     def __init__(self):
+        '''Initializes BugPipeline.'''
+
         # NLP description
         self.desc_vect = TfidfVectorizer(input='content', lowercase=True, tokenizer=None,
                                          stop_words='english', use_idf=True,
@@ -42,6 +43,24 @@ class BugPipeline(object):
                                                          verbose=0, max_leaf_nodes=None, warm_start=False)
 
     def fit(self, X, y):
+        '''Fits bug pipeline.
+
+        Three classifier models in the first level are built:
+        1) Multinomial Naive Bayes on short description (tfidf with 2,000 features)
+        2) Multinomial Naive Bayes on long description (tfidf with 20,000 features)
+        3) Gradient Boosting on other features
+
+        Linear Stacking is used and another Gradient Boosting classifier
+        runs using meta-features (probabilities predicted by first level models).
+
+        Args:
+            X (dataframe): Features.
+            y (series): Target.
+
+        Returns:
+            None.
+        '''
+
         X.set_index([range(X.shape[0])], inplace=True)
         y.reset_index(drop=True, inplace=True)
         fold = 1
@@ -58,47 +77,53 @@ class BugPipeline(object):
             y_train, y_test = y.loc[train_index], y.loc[test_index]
 
             # NLP description
-            # print '{}: NLP description fit'.format(datetime.datetime.now())
             desc_tfidf = self.desc_vect.fit_transform(X_train.pop('desc_init'))
             self.desc_nb_model.fit(desc_tfidf, y_train)
 
             # NLP short description
-            # print '{}: NLP short description fit'.format(datetime.datetime.now())
             short_desc_tfidf = self.short_desc_vect.fit_transform(
                 X_train.pop('short_desc_init'))
             self.short_desc_nb_model.fit(short_desc_tfidf, y_train)
-            # X_train.drop('short_desc_init', axis=1, inplace=True)
 
             self.feat_gb_model.fit(X_train, y_train)
 
+            # Collect data for linear stacking
             if fold > 1:
                 X_ensem = np.vstack((X_ensem,
-                                    np.hstack(
-                                    (self.desc_nb_model.predict_proba(self.desc_vect.transform(X_test.pop('desc_init'))),
-                                     self.short_desc_nb_model.predict_proba(self.short_desc_vect.transform(X_test.pop('short_desc_init'))),
-                                     self.feat_gb_model.predict_proba(X_test)))))
+                                     np.hstack(
+                                         (self.desc_nb_model.predict_proba(self.desc_vect.transform(X_test.pop('desc_init'))),
+                                          self.short_desc_nb_model.predict_proba(
+                                             self.short_desc_vect.transform(X_test.pop('short_desc_init'))),
+                                             self.feat_gb_model.predict_proba(X_test)))))
                 y_ensem = np.hstack((y_ensem, y_test.values))
             else:
                 X_ensem = np.hstack(
                     (self.desc_nb_model.predict_proba(self.desc_vect.transform(X_test.pop('desc_init'))),
-                     self.short_desc_nb_model.predict_proba(self.short_desc_vect.transform(X_test.pop('short_desc_init'))),
+                     self.short_desc_nb_model.predict_proba(
+                         self.short_desc_vect.transform(X_test.pop('short_desc_init'))),
                      self.feat_gb_model.predict_proba(X_test)))
                 y_ensem = y_test.values
             fold += 1
 
-        # Ensemble
+        # Linear stacking
         print '{}: training ensemble'.format(datetime.datetime.now())
         self.ensem_gb_model.fit(X_ensem, y)
 
-        # pickle_path = '../data/X_ensemble.pkl'
-        # with open(pickle_path, 'w') as f:
-        #     pickle.dump(X_ensem, f)
-
-        # pickle_path = '../data/y_ensemble.pkl'
-        # with open(pickle_path, 'w') as f:
-        #     pickle.dump(y, f)
-
     def predict(self, X, y):
+        '''Predicts and evaluates the predictions.
+
+        Args:
+            X (dataframe): Features.
+            y (series): Target.
+
+        Returns:
+            None.
+
+        TODO:
+            Make target (and evaluation) optional.
+            Return predictions.
+        '''
+
         # NLP description
         print '{}: NLP description transform and predict'.format(datetime.datetime.now())
         desc_tfidf = self.desc_vect.transform(X.pop('desc_init'))
@@ -111,7 +136,6 @@ class BugPipeline(object):
             X.pop('short_desc_init'))
         short_desc_y_pred = self.short_desc_nb_model.predict(short_desc_tfidf)
         print 'short desc classification report: \n {}'.format(classification_report(y, short_desc_y_pred))
-        # X.drop('short_desc_init', axis=1, inplace=True)
 
         # Non-textual features
         print '{}: Non-textual features transform and predict'.format(datetime.datetime.now())
@@ -120,7 +144,7 @@ class BugPipeline(object):
         feat_y_pred = self.feat_gb_model.predict(X)
         print 'feature classification report: \n {}'.format(classification_report(y, feat_y_pred))
 
-        # Ensemble
+        # Linear stacking
         X_ensem = np.hstack(
             (self.desc_nb_model.predict_proba(desc_tfidf),
              self.short_desc_nb_model.predict_proba(short_desc_tfidf),
@@ -128,14 +152,29 @@ class BugPipeline(object):
         ensem_y_pred = self.ensem_gb_model.predict(X_ensem)
         print 'ensemble classification report: \n {}'.format(classification_report(y, ensem_y_pred))
 
+        return
+
     def vectorize_features(self, X, train):
+        '''Predicts and evaluates the predictions.
+
+        Args:
+            X (dataframe): Dataframe with `component_init` and `op_sys_init` columns.
+            train (boolean): Whether it is train data (fit) or not (transform).
+
+        Returns:
+            dataframe: Dataframe with `component_init` and `op_sys_init` vectorized.
+
+        TODO:
+            This is kind of ugly and repetitive. Improve?
+        '''
         if train:
             # vectorize component
             component_value_cnts = X['component_init'].value_counts()
             X['component_init'] = X['component_init'].map(
                 lambda x: x if component_value_cnts[x] > 100 else 'unimportant')
 
-            component = self.component_vect.fit_transform(X.pop('component_init'))
+            component = self.component_vect.fit_transform(
+                X.pop('component_init'))
             X = pd.concat([X.reset_index(drop=True),
                            pd.DataFrame(component.toarray(), columns=[
                                         'component_' + str(x) for x in xrange(component.shape[1])]).reset_index(drop=True)

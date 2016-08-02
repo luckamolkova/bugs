@@ -90,11 +90,13 @@ The code runs roughly 3 minutes. Table named `final` is created in the database.
 
 ## Data Exploration
 
+- Code and detailed results are in `data_exploration.ipynb`.
+
 - 310,947 bugs in total
 - opening: from 1996-03-11 to 2013-01-01
 - closing: from 1998-08-27 to 2013-01-01
 
-### Reassignments
+#### Reassignments
 
 ```
 priority:    6 unique values, 27,319  (8.79%) bugs reassigned
@@ -115,7 +117,7 @@ product:    69 unique values, 24,568  (7.90%) bugs reassigned
 product:     8 unique values, 25,563  (7.89%) bugs reassigned
 ```
 
-### Duplicates
+#### Duplicates
 
 26% bug reports end up being closed as duplicates:
 
@@ -131,7 +133,7 @@ moved              14
                     4
 ```
 
-### Resolution Time
+#### Resolution Time
 
 - Calculated as `reports.opening` - last(`resolution.when`)
 
@@ -155,181 +157,70 @@ year 30-365 days  82,785
 more   365+ days  53,125
 ```
 
-## Data Preparation
+## Data Preparation and Modeling
+
+- Run `pickle_bug_pipelines.py` from terminal:
+
+```
+$ time python pickle_bug_pipelines.py
+```
 
 - Only keep stuff with description
 - Only keep closed (././.)
 - Get rid of enhancements (Bugzilla allows users to request new features, which technically do not represent real bugs. Therefore, we do not consider reports where the severity attribute is set to enhancement as this category is reserved for feature requests.)
-- Calculate resolution time in days as `reports.opening` - last(`resolution.when`)
 
-## Modeling
+#### Predicting Severity
 
-### Predict Resolution Time using description
-
-Only look at fixed
+Get rid of enhancements and normal (defaults)
+       
 ```
-df_fixed = df[df['resolution_final'] == 'fixed']
-```
-
-**Classifier**
-
-```
-df_fixed['duration_bin2'] = pd.qcut(df_fixed['duration_days'], 5)
-df_fixed['duration_bin2'].value_counts()
-[0, 2]         25791
-(123, 4567]    21991
-(30, 123]      21872
-(9, 30]        20664
-(2, 9]         19825
+df = df[df['severity_final'] != 'enhancement']
+df = df[df['severity_final'] != 'normal']
 ```
 
-Majority is 23.4060067549% cases in train
-Majority is 23.4456711214% cases in test
+**Ensemble**
 
 ```
-nb_model = MultinomialNB()
-accuracy: 0.295177222545
-precision: 0.267809211621
-recall: 0.295177222545
-confusion matrix: 
- [[2665   53  671  154 2028]
- [1214   75  547  165 2965]
- [1936   80  823  183 2408]
- [1474   68  632  207 2732]
- [1352   70  535  141 4358]]
+ensemble classification report:
+              precision    recall  f1-score   support
 
-rf_model = RandomForestClassifier(n_estimators=20, criterion='gini', 
-                               max_depth=3, max_features='auto', 
-                               bootstrap=True, oob_score=True,
-                               random_state=None, warm_start=False)
-accuracy: 0.251670540383
-precision: 0.170135880347
-recall: 0.251670540383
-confusion matrix: 
- [[ 742    0    8    3 4818]
- [ 258    0    2    1 4705]
- [ 474    1    2    0 4953]
- [ 323    0    7    1 4782]
- [ 259    0   10    2 6185]]
+    blocker       0.50      0.17      0.25       946
+   critical       0.78      0.75      0.77      8835
+      major       0.55      0.73      0.63      8713
+      minor       0.48      0.38      0.42      4472
+    trivial       0.52      0.29      0.37      1841
 
-gb_model = GradientBoostingClassifier(loss='deviance', learning_rate=0.1, 
-                                   n_estimators=100, subsample=1.0,
-                                   max_depth=3, init=None, 
-                                   random_state=None, max_features=None, 
-                                   verbose=0, max_leaf_nodes=None, warm_start=False)
-accuracy: 0.289221382917
-precision: 0.2719571918
-recall: 0.289221382917
-confusion matrix: 
- [[1957   41  811   78 2684]
- [ 769   76  602  101 3418]
- [1300   64  943  130 2993]
- [ 935   65  731  131 3251]
- [ 814   90  607   88 4857]]
+avg / total       0.62      0.62      0.61     24807
 ```
 
-**Regressor**
+#### Predicting Priority
+
+Get rid of empty and -- (defaults)
 
 ```
-df_fixed['duration_days_log'] = df_fixed['duration_days'].map(lambda x: np.log10(x + 1))
-df_fixed['duration_days_log'].hist()
+df = df[df['priority_final'] != '']
+df = df[df['priority_final'] != '--']
 ```
 
-```
-rf1_model = RandomForestRegressor(n_estimators=20, criterion='mse', 
-                               max_depth=3, max_features='auto', 
-                               bootstrap=True, oob_score=True,
-                               random_state=None, warm_start=False)
-oob score: 0.0390567043731
-r-squared: 0.0356680001073
-```
-
-### Predict Resolution Time using other features
-
-**Classifier**
+**Ensemble**
 
 ```
-df_fixed['duration_bin2'] = pd.qcut(df_fixed['duration_days'], 5, labels=[0,1,2,3,4])
-df_fixed['duration_bin2'].value_counts()
-0    25791
-4    21991
-3    21872
-2    20664
-1    19825
+ensemble classification report:
+              precision    recall  f1-score   support
+
+         p1       0.47      0.61      0.53      2406
+         p2       0.40      0.49      0.44      2402
+         p3       0.38      0.24      0.29      1522
+         p4       0.24      0.02      0.04       573
+         p5       0.33      0.05      0.09       245
+
+avg / total       0.40      0.43      0.40      7148
 ```
 
-Majority is 23.4060067549% cases in train
-Majority is 23.4456711214% cases in test
+## Evaluate
 
-```
-nb_model = MultinomialNB()
-accuracy: 0.262165891923
-precision: 0.225583691589
-recall: 0.262165891923
-confusion matrix: 
- [[4833    6   10  346 1261]
- [3426    6   11  335 1188]
- [3344    6    8  360 1395]
- [3355    6    7  398 1664]
- [3148    6   11  432 1974]]
+TODO
 
- rf_model = RandomForestClassifier(n_estimators=20, criterion='gini', 
-                               max_depth=3, max_features='auto', 
-                               bootstrap=True, oob_score=True,
-                               random_state=None, warm_start=False)
-accuracy: 0.287877687391
-precision: 0.181562189074
-recall: 0.287877687391
-confusion matrix: 
- [[4709    1    0  972  774]
- [3222    0    0  984  760]
- [3042    0    0 1091  980]
- [2874    0    0 1234 1322]
- [2434    0    0 1153 1984]]
+## Deployment
 
-gb_model = GradientBoostingClassifier(loss='deviance', learning_rate=0.1, 
-                                   n_estimators=100, subsample=1.0,
-                                   max_depth=3, init=None, 
-                                   random_state=None, max_features=None, 
-                                   verbose=0, max_leaf_nodes=None, warm_start=False)
-accuracy: 0.297247239977
-precision: 0.262224082459
-recall: 0.297247239977
-confusion matrix: 
- [[4150   83  110  885 1228]
- [2677   66  120  914 1189]
- [2520   54  127 1035 1377]
- [2197   57  137 1155 1884]
- [1707   44  107 1026 2687]]
-```
-
-**Regressor**
-
-```
-df_fixed['duration_days_log'] = df_fixed['duration_days'].map(lambda x: np.log10(x + 1))
-df_fixed['duration_days_log'].hist()
-```
-
-```
-rf_model = RandomForestRegressor(n_estimators=20, criterion='mse', 
-                               max_depth=3, max_features='auto', 
-                               bootstrap=True, oob_score=True,
-                               random_state=None, warm_start=False)
-oob score: 0.0734031807501
-r-squared: 0.06963286351
-```
-
-## Ran Manually
-
-```
-CREATE TABLE IF NOT EXISTS reporter_bugs AS (
-  SELECT 
-    f1.id AS id
-    , COUNT(f2.id) AS reporter_bug_cnt
-  FROM final f1
-    LEFT OUTER JOIN final f2
-      ON f1.reporter = f2.reporter
-      AND f1.opening > f2.opening
-  GROUP BY f1.id
-);
-```
+- See the Flask app (models still need to be incorporated).

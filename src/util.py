@@ -13,6 +13,44 @@ def connect_db():
         exit(1)
     return conn
 
+def create_empty_tables(conn, tables):
+    '''Creates empty tables unless they already exist.
+
+    Args:
+        conn: Psycopg2 connection to PostgreSQL database.
+        tables (list): List of tables to be created in addition to reports table.
+
+    Returns:
+        None.
+    '''
+    cur = conn.cursor()
+
+    # create reports table
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS reports (
+        opening             timestamp,
+        reporter            bigint,
+        current_status      varchar(50),
+        current_resolution  varchar(50),
+        id                  bigint NOT NULL
+        );
+    """)
+    conn.commit()
+
+    # create other tables
+    for table in tables:
+        query = """
+            CREATE TABLE IF NOT EXISTS {} (
+            when_created    timestamp,
+            what            text,
+            who             bigint,
+            id              bigint NOT NULL
+            );
+        """.format(table)
+        cur.execute(query)
+        conn.commit()
+
+    return
 
 def create_features(df, target):
     '''Take the dataframe and make it ready for models.
@@ -26,7 +64,7 @@ def create_features(df, target):
 
     if target == 'priority_final':
         df.drop(['severity_final'], axis=1, inplace=True)
-        # get rid of empty and --
+        # get rid of empty and -- (default)
         df = df[df['priority_final'] != '']
         df = df[df['priority_final'] != '--']
 
@@ -57,10 +95,6 @@ def create_features(df, target):
     df['desc_init_wordcnt'] = df['desc_init'].map(lambda x: len(x.split()))
 
     # one hot encodings
-    # bug_status_vocabulary = ['new', 'unconfirmed', 'assigned',
-    #                          'resolved', 'verified', 'closed', 'reopened']
-    # df = one_hot(df, 'bug_status_init', bug_status_vocabulary)
-
     product_vocabulary = ['other', 'core', 'firefox', 'thunderbird',
                           'bugzilla', 'browser', 'webtools', 'psm']
     df = one_hot(df, 'product_init', product_vocabulary)
@@ -73,6 +107,17 @@ def create_features(df, target):
 
 
 def one_hot(df, colname, vocabulary):
+    '''Performs one hot encoding of specified column in a dataframe.
+
+    Args:
+        df (dataframe): Dataframe with a column to encode.
+        colname (string): Name of column to perform one hot encoding on.
+        vocabulary (list of strings): List of values to encode.
+
+    Returns:
+        dataframe: Original dataframe with the initial column replaced with
+        new x columns (x is number of items in the vocabulary)
+    '''
     cnt_vectorizer = CountVectorizer(vocabulary=vocabulary)
     data = cnt_vectorizer.fit_transform(df.pop(colname).map(
         lambda x: x if x in vocabulary else 'other'))
