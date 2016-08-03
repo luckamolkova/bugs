@@ -4,7 +4,7 @@ import numpy as np
 import datetime
 from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
 from sklearn.naive_bayes import MultinomialNB
-from sklearn.ensemble import GradientBoostingClassifier, RandomForestClassifier
+from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.metrics import classification_report
 from sklearn.cross_validation import KFold
 
@@ -17,14 +17,14 @@ class BugPipeline(object):
         # NLP description
         self.desc_vect = TfidfVectorizer(input='content', lowercase=True, tokenizer=None,
                                          stop_words='english', use_idf=True,
-                                         max_features=20000, ngram_range=(1, 3))
-        self.desc_nb_model = MultinomialNB()
+                                         max_features=30000, ngram_range=(1, 3))
+        self.desc_nb_model = MultinomialNB(alpha=1e-09)
 
         # NLP short description
         self.short_desc_vect = TfidfVectorizer(input='content', lowercase=True, tokenizer=None,
                                                stop_words='english', use_idf=True,
-                                               max_features=2000, ngram_range=(1, 3))
-        self.short_desc_nb_model = MultinomialNB()
+                                               max_features=10000, ngram_range=(1, 3))
+        self.short_desc_nb_model = MultinomialNB(alpha=1.0)
 
         # Non-textual features
         self.op_sys_vect = CountVectorizer()
