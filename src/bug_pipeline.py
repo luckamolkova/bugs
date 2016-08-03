@@ -7,12 +7,13 @@ from sklearn.naive_bayes import MultinomialNB
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.metrics import classification_report
 from sklearn.cross_validation import KFold
+import pickle
 
 
 class BugPipeline(object):
 
     def __init__(self):
-        '''Initializes BugPipeline.'''
+        """Initializes BugPipeline."""
 
         # NLP description
         self.desc_vect = TfidfVectorizer(input='content', lowercase=True, tokenizer=None,
@@ -29,21 +30,21 @@ class BugPipeline(object):
         # Non-textual features
         self.op_sys_vect = CountVectorizer()
         self.component_vect = CountVectorizer()
-        self.feat_gb_model = GradientBoostingClassifier(loss='deviance', learning_rate=0.1,
+        self.feat_gb_model = GradientBoostingClassifier(loss='deviance', learning_rate=0.5,
                                                         n_estimators=100, subsample=1.0,
                                                         max_depth=3, init=None,
                                                         random_state=None, max_features=None,
                                                         verbose=0, max_leaf_nodes=None, warm_start=False)
 
-        # Ensemble
+        # Linear stacking
         self.ensem_gb_model = GradientBoostingClassifier(loss='deviance', learning_rate=0.1,
                                                          n_estimators=100, subsample=1.0,
                                                          max_depth=3, init=None,
                                                          random_state=None, max_features=None,
                                                          verbose=0, max_leaf_nodes=None, warm_start=False)
 
-    def fit(self, X, y):
-        '''Fits bug pipeline.
+    def fit(self, X_data, y_data):
+        """Fits bug pipeline.
 
         Three classifier models in the first level are built:
         1) Multinomial Naive Bayes on short description (tfidf with 2,000 features)
@@ -54,23 +55,24 @@ class BugPipeline(object):
         runs using meta-features (probabilities predicted by first level models).
 
         Args:
-            X (dataframe): Features.
-            y (series): Target.
+            X_data (dataframe): Features.
+            y_data (series): Target.
 
         Returns:
             None.
-        '''
+        """
 
+        X = X_data.copy(deep=True)
         X.set_index([range(X.shape[0])], inplace=True)
+        y = y_data.copy(deep=True)
         y.reset_index(drop=True, inplace=True)
-        fold = 1
 
         # Non-textual features
         print '{}: Non-textual features fit'.format(datetime.datetime.now())
         X = self.vectorize_features(X, train=True)
-
+        fold = 0
         # KFold training needed for linear stacking
-        kf = KFold(X.shape[0], n_folds=3, shuffle=False, random_state=42)
+        kf = KFold(X.shape[0], n_folds=5, shuffle=False, random_state=42)
         for train_index, test_index in kf:
             print '{}: KFold training fold {}'.format(datetime.datetime.now(), fold)
             X_train, X_test = X.loc[train_index], X.loc[test_index]
@@ -88,7 +90,7 @@ class BugPipeline(object):
             self.feat_gb_model.fit(X_train, y_train)
 
             # Collect data for linear stacking
-            if fold > 1:
+            if fold > 0:
                 X_ensem = np.vstack((X_ensem,
                                      np.hstack(
                                          (self.desc_nb_model.predict_proba(self.desc_vect.transform(X_test.pop('desc_init'))),
@@ -105,44 +107,48 @@ class BugPipeline(object):
                 y_ensem = y_test.values
             fold += 1
 
+        pickle_path = '../data/X_ensem.pkl'
+        with open(pickle_path, 'w') as f:
+            pickle.dump(X_ensem, f)
+
+        pickle_path = '../data/y_ensem.pkl'
+        with open(pickle_path, 'w') as f:
+            pickle.dump(y, f)
+
         # Linear stacking
         print '{}: training ensemble'.format(datetime.datetime.now())
         self.ensem_gb_model.fit(X_ensem, y)
 
-    def predict(self, X, y):
-        '''Predicts and evaluates the predictions.
+    def predict(self, X_data):
+        """Predicts.
 
         Args:
-            X (dataframe): Features.
-            y (series): Target.
+            X_data (dataframe): Features.
 
         Returns:
-            None.
-
-        TODO:
-            Make target (and evaluation) optional.
             Return predictions.
-        '''
+        """
+        X = X_data.copy(deep=True)
 
         # NLP description
         print '{}: NLP description transform and predict'.format(datetime.datetime.now())
         desc_tfidf = self.desc_vect.transform(X.pop('desc_init'))
         desc_y_pred = self.desc_nb_model.predict(desc_tfidf)
-        print 'desc classification report: \n {}'.format(classification_report(y, desc_y_pred))
+        # print 'desc classification report: \n {}'.format(classification_report(y, desc_y_pred))
 
         # NLP short description
         print '{}: NLP short description transform and predict'.format(datetime.datetime.now())
         short_desc_tfidf = self.short_desc_vect.transform(
             X.pop('short_desc_init'))
         short_desc_y_pred = self.short_desc_nb_model.predict(short_desc_tfidf)
-        print 'short desc classification report: \n {}'.format(classification_report(y, short_desc_y_pred))
+        # print 'short desc classification report: \n {}'.format(classification_report(y, short_desc_y_pred))
 
         # Non-textual features
         print '{}: Non-textual features transform and predict'.format(datetime.datetime.now())
         X = self.vectorize_features(X, train=False)
 
         feat_y_pred = self.feat_gb_model.predict(X)
-        print 'feature classification report: \n {}'.format(classification_report(y, feat_y_pred))
+        # print 'feature classification report: \n {}'.format(classification_report(y, feat_y_pred))
 
         # Linear stacking
         X_ensem = np.hstack(
@@ -150,12 +156,25 @@ class BugPipeline(object):
              self.short_desc_nb_model.predict_proba(short_desc_tfidf),
              self.feat_gb_model.predict_proba(X)))
         ensem_y_pred = self.ensem_gb_model.predict(X_ensem)
-        print 'ensemble classification report: \n {}'.format(classification_report(y, ensem_y_pred))
 
-        return
+        return ensem_y_pred
+
+    def evaluate(self, X, y):
+        """Prints classification report for the final predictions.
+
+        Args:
+            X (dataframe): Features.
+            y (dataframe): Target.
+
+        Returns:
+            Sklearn classification report.
+        """
+        y_pred = self.predict(X)
+        return classification_report(y, y_pred)
+
 
     def vectorize_features(self, X, train):
-        '''Predicts and evaluates the predictions.
+        """Predicts and evaluates the predictions.
 
         Args:
             X (dataframe): Dataframe with `component_init` and `op_sys_init` columns.
@@ -166,7 +185,7 @@ class BugPipeline(object):
 
         TODO:
             This is kind of ugly and repetitive. Improve?
-        '''
+        """
         if train:
             # vectorize component
             component_value_cnts = X['component_init'].value_counts()

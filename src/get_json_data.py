@@ -7,7 +7,7 @@ from util import create_empty_tables, connect_db
 
 
 def load_table(conn, json_file):
-    '''Moves data from json file to PostgreSQL table with the same name.
+    """Moves data from json file to PostgreSQL table with the same name.
 
     Args:
         conn: Psycopg2 connection to PostgreSQL database.
@@ -15,7 +15,7 @@ def load_table(conn, json_file):
 
     Returns:
         None.
-    '''
+    """
     cur = conn.cursor()
     cur.execute("SET TIME ZONE 'UTC';")
 
@@ -29,10 +29,12 @@ def load_table(conn, json_file):
         for key, val in data[json_file].iteritems():
             # reports
             if type(val) == collections.OrderedDict:
+                # inserted columns: opening, reporter, current_status, current_resolution, id
                 query = 'INSERT INTO reports VALUES (to_timestamp(%s), %s, %s, %s, %s)'
                 cur.execute(query, val.values() + [int(key)])
             # other tables
             else:
+                # inserted columns: when_created, what, who, id
                 query = 'INSERT INTO {} VALUES (to_timestamp(%s), %s, %s, %s)'.format(
                     json_file)
                 for x in val:

@@ -2,8 +2,6 @@ from __future__ import division
 import requests
 import collections
 import json
-import psycopg2
-import time
 import datetime
 from multiprocessing.pool import ThreadPool
 from functools import partial
@@ -14,7 +12,7 @@ requests.adapters.DEFAULT_RETRIES = 2
 
 
 def get_next_n(conn, limit=0):
-    ''' Gets description (first comment) for n bugs and stores it in PostgreSQL database.
+    """Gets description (first comment) for n bugs and stores it in PostgreSQL database.
 
     Args:
         conn: Psycopg2 connection to PostgreSQL database.
@@ -22,7 +20,7 @@ def get_next_n(conn, limit=0):
 
     Returns:
         None.
-    '''
+    """
     cur = conn.cursor()
     cur.execute("SET TIME ZONE 'UTC';")
 
@@ -52,7 +50,7 @@ def get_next_n(conn, limit=0):
 
 
 def get_bug_desc(conn, bug):
-    ''' Uses bugzilla API to get first bug comment and stores it in PostgreSQL database.
+    """Uses bugzilla API to get first bug comment and stores it in PostgreSQL database.
 
     Args:
         conn: Psycopg2 connection to PostgreSQL database.
@@ -60,7 +58,7 @@ def get_bug_desc(conn, bug):
 
     Returns:
         None. Fetched data is inserted into descriptions table.
-    '''
+    """
     cur = conn.cursor()
 
     bug_id = str(bug[0])
@@ -79,12 +77,14 @@ def get_bug_desc(conn, bug):
         return
 
     # insert into database
+    # 9 h are subtracted to make the scraped time consistent with time in json
+    # it is not ideal as it does not deal with daylight savings
     cur.execute("""
         INSERT INTO descriptions
         VALUES (%s, to_timestamp(%s, 'YYYY-MM-DD HH24:MI:SS') - interval '9 h', %s)
         """,
-        [bug_id, bug_date, bug_desc]
-    )
+                [bug_id, bug_date, bug_desc]
+                )
     return
 
 if __name__ == "__main__":

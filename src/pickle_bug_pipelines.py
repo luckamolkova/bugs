@@ -1,48 +1,25 @@
 from __future__ import division
 import pandas as pd
 import datetime
-from util import connect_db, create_features
-from bug_pipeline import BugPipeline
-from sklearn.cross_validation import train_test_split
 import pickle
+from util import get_data
+from bug_pipeline import BugPipeline
 
 if __name__ == '__main__':
 
     pd.options.mode.chained_assignment = None  # turn off warnings
 
-    # Get data from database
-    print '{}: connecting to database'.format(datetime.datetime.now())
-    conn = connect_db()
+    targets=['severity_final', 'priority_final']
 
-    print '{}: loading data from database'.format(datetime.datetime.now())
-    col_list = '''
-        assigned_to_init, cc_init,
-        product_init, version_init,
-        component_init, op_sys_init, reporter_bug_cnt,
-        desc_init, short_desc_init,
-        priority_final, severity_final
-        '''
-    df_original = pd.read_sql_query('select {} from final'.format(col_list), con=conn)
-
-    for target in ['priority_final', 'severity_final']:
-        df = df_original.copy(deep=True)
-
-        # Feature engineering
-        print '{}: feature engineering {}'.format(datetime.datetime.now(), target)
-        df = create_features(df, target=target)
-
-        y_all = df.pop(target)
-        X_all = df
-
-        X, X_test, y, y_test = train_test_split(
-            X_all, y_all, test_size=0.25, random_state=42)
-
-        # Fit and pickle pipeline
+    # Fit and pickle pipeline(s)
+    for target in targets:
+        X, X_test, y, y_test = get_data(limit=None, target=target) # set limit=None to get everything
         pipeline = BugPipeline()
         print '{}: fitting pipeline for {}'.format(datetime.datetime.now(), target)
         pipeline.fit(X, y)
         print '{}: predicting for {}'.format(datetime.datetime.now(), target)
-        pipeline.predict(X_test, y_test)
+        class_report = pipeline.evaluate(X_test, y_test)
+        print class_report
 
         pickle_path = '../data/{}_pipeline.pkl'.format(target)
         with open(pickle_path, 'w') as f:

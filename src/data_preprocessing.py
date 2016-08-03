@@ -5,7 +5,7 @@ from util import connect_db
 
 
 def create_base_table(conn, base_table='base'):
-    '''Creates base table listing all bugs relevant for project.
+    """Creates base table listing all bugs relevant for project.
 
     Args:
         conn: Psycopg2 connection to PostgreSQL database.
@@ -13,7 +13,7 @@ def create_base_table(conn, base_table='base'):
 
     Returns:
         None. Table is created in database.
-    '''
+    """
     print '{}: creating {} table...'.format(datetime.datetime.now(), base_table)
     cur = conn.cursor()
     query = 'DROP TABLE IF EXISTS {};'.format(base_table)
@@ -40,7 +40,7 @@ def create_base_table(conn, base_table='base'):
 
 
 def create_clean_table(conn, table):
-    '''Creates cleaned up table - lowercased, trimmed, with empty strings rather than nulls.
+    """Creates cleaned up table - lowercased, trimmed, with empty strings rather than nulls.
 
     Args:
         conn: Psycopg2 connection to PostgreSQL database.
@@ -48,7 +48,7 @@ def create_clean_table(conn, table):
 
     Returns:
         None. Table is created in database.
-    '''
+    """
     print '{}: creating {}_clean table...'.format(datetime.datetime.now(), table)
     cur = conn.cursor()
     query = 'DROP TABLE IF EXISTS {}_clean;'.format(table)
@@ -71,7 +71,7 @@ def create_clean_table(conn, table):
 
 
 def create_temp_table(conn, table):
-    '''Creates temporary table with initial and final values per bug report.
+    """Creates temporary table with initial and final values per bug report.
 
     Args:
         conn: Psycopg2 connection to PostgreSQL database.
@@ -79,7 +79,7 @@ def create_temp_table(conn, table):
 
     Returns:
         None.
-    '''
+    """
     print '{}: creating {}_2 temp table...'.format(datetime.datetime.now(), table)
     cur = conn.cursor()
     query = 'DROP TABLE IF EXISTS {}_2;'.format(table)
@@ -111,7 +111,7 @@ def create_temp_table(conn, table):
 
 
 def create_reporter_bugs_table(conn, reporter_bugs_table='reporter_bugs'):
-    '''Creates table with number of bugs reported.
+    """Creates table with number of bugs reported.
 
     Args:
         conn: Psycopg2 connection to PostgreSQL database.
@@ -119,7 +119,7 @@ def create_reporter_bugs_table(conn, reporter_bugs_table='reporter_bugs'):
 
     Returns:
         None. Table is created in database.
-    '''
+    """
     print '{}: creating {} table...'.format(datetime.datetime.now(), reporter_bugs_table)
     cur = conn.cursor()
     query = 'DROP TABLE IF EXISTS {};'.format(final_table)
@@ -142,7 +142,7 @@ def create_reporter_bugs_table(conn, reporter_bugs_table='reporter_bugs'):
 
 
 def create_final_table(conn, base_table='base', final_table='final'):
-    '''Creates final table with initial and final bug report data.
+    """Creates final table with initial and final bug report data.
 
     Args:
         conn: Psycopg2 connection to PostgreSQL database.
@@ -151,7 +151,7 @@ def create_final_table(conn, base_table='base', final_table='final'):
 
     Returns:
         None. Table is created in database.
-    '''
+    """
     create_reporter_bugs_table()
 
     print '{}: creating {} table...'.format(datetime.datetime.now(), final_table)

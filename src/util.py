@@ -1,11 +1,12 @@
 from __future__ import division
 import psycopg2
 import pandas as pd
-from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
-
+from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.cross_validation import train_test_split
+import datetime
 
 def connect_db():
-    '''Returns psycopg2 connection to PostgreSQL database.'''
+    """Returns psycopg2 connection to PostgreSQL database."""
     try:
         conn = psycopg2.connect("dbname='bugs' user='lucka' host='localhost'")
     except:
@@ -13,8 +14,40 @@ def connect_db():
         exit(1)
     return conn
 
+def get_data(limit=None, target='severity_final'):
+    """Returns train test split of relevant data from database."""
+    print '{}: connecting to database'.format(datetime.datetime.now())
+    conn = connect_db()
+
+    print '{}: loading data from database'.format(datetime.datetime.now())
+    col_list = """
+        assigned_to_init, cc_init,
+        product_init, version_init,
+        component_init, op_sys_init, reporter_bug_cnt,
+        desc_init, short_desc_init,
+        priority_final, severity_final
+        """
+    if limit:
+        df_original = pd.read_sql_query(
+            'select {} from final limit {}'.format(col_list, limit), con=conn)
+    else:
+        df_original = pd.read_sql_query(
+            'select {} from final'.format(col_list), con=conn)
+
+    df = df_original.copy(deep=True)
+
+    # Feature engineering
+    print '{}: feature engineering {}'.format(datetime.datetime.now(), target)
+    df = create_features(df, target=target)
+
+    y_all = df.pop(target)
+    X_all = df
+
+    return train_test_split(X_all, y_all, test_size=0.25, random_state=42)
+
+
 def create_empty_tables(conn, tables):
-    '''Creates empty tables unless they already exist.
+    """Creates empty tables unless they already exist.
 
     Args:
         conn: Psycopg2 connection to PostgreSQL database.
@@ -22,7 +55,7 @@ def create_empty_tables(conn, tables):
 
     Returns:
         None.
-    '''
+    """
     cur = conn.cursor()
 
     # create reports table
@@ -53,18 +86,18 @@ def create_empty_tables(conn, tables):
     return
 
 def create_features(df, target):
-    '''Take the dataframe and make it ready for models.
+    """Takes the dataframe and makes it ready for models.
 
     Args:
         df (dataframe): Pandas dataframe with data.
 
     Returns:
         dataframe: modified input dataframe
-    '''
+    """
 
     if target == 'priority_final':
         df.drop(['severity_final'], axis=1, inplace=True)
-        # get rid of empty and -- (default)
+        # get rid of empty and -- (default values treated as unlabeled)
         df = df[df['priority_final'] != '']
         df = df[df['priority_final'] != '--']
 
@@ -74,7 +107,7 @@ def create_features(df, target):
 
     if target == 'severity_final':
         df.drop(['priority_final'], axis=1, inplace=True)
-        # get rid of enhancements and normal (default)
+        # get rid of enhancements and normal (default values treated as unlabeled)
         df = df[df['severity_final'] != 'enhancement']
         df = df[df['severity_final'] != 'normal']
 
@@ -107,7 +140,7 @@ def create_features(df, target):
 
 
 def one_hot(df, colname, vocabulary):
-    '''Performs one hot encoding of specified column in a dataframe.
+    """Performs one hot encoding of specified column in a dataframe.
 
     Args:
         df (dataframe): Dataframe with a column to encode.
@@ -117,7 +150,7 @@ def one_hot(df, colname, vocabulary):
     Returns:
         dataframe: Original dataframe with the initial column replaced with
         new x columns (x is number of items in the vocabulary)
-    '''
+    """
     cnt_vectorizer = CountVectorizer(vocabulary=vocabulary)
     data = cnt_vectorizer.fit_transform(df.pop(colname).map(
         lambda x: x if x in vocabulary else 'other'))
