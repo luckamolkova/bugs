@@ -399,40 +399,47 @@
                             <form id="contact-form" onsubmit="return false;">
                                 <div class="control-group">
                                     <div class="controls">
-                                        <input class="span12" type="text" name="product" value="product" />
-                                        <div class="error left-align" id="err-name">Please enter product.</div>
-                                    </div>
-                                </div>
-                                <div class="control-group">
-                                    <div class="controls">
-                                        <input class="span12" type="text" name="component" value="component" />
-                                        <div class="error left-align" id="err-name">Please enter component.</div>
-                                    </div>
-                                </div>
-                                <div class="control-group">
-                                    <div class="controls">
-                                        <input class="span12" type="text" name="assignee" value="assignee"/>
-                                        <div class="error left-align" id="err-name">Please enter assignee.</div>
-                                    </div>
-                                </div>
-                                <div class="control-group">
-                                    <div class="controls">
-                                        <input class="span12" type="text" name="cc" value="cc" />
-                                        <div class="error left-align" id="err-name">Please enter cc.</div>
-                                    </div>
-                                </div>
-                                <div class="control-group">
-                                    <div class="controls">
-                                        <input class="span12" type="text" name="short_desc" value="short description" />
+                                        <input class="span12" type="text" name="short_desc" value="FF crashes when playing video" />
                                         <div class="error left-align" id="err-name">Please enter short description.</div>
                                     </div>
                                 </div>
                                 <div class="control-group">
                                     <div class="controls">
-                                        <textarea class="span12" name="desc" placeholder="description"></textarea>
-                                        <div class="error left-align" id="err-comment">Please enter description.</div>
+                                        <textarea class="span12" name="desc" placeholder="description">When playing video on this website (http://xxx.com) firefox crashes with unexpected error...</textarea>
+                                        <div class="error left-align" id="err-comment">Please enter description</div>
                                     </div>
                                 </div>
+                                <div class="control-group">
+                                    <div class="controls">
+                                        <input class="span12" type="text" name="product" value="firefox" />
+                                        <div class="error left-align" id="err-name">Please enter product.</div>
+                                    </div>
+                                </div>
+                                <div class="control-group">
+                                    <div class="controls">
+                                        <input class="span12" type="text" name="component" value="browser" />
+                                        <div class="error left-align" id="err-name">Please enter component.</div>
+                                    </div>
+                                </div>
+                                <div class="control-group">
+                                    <div class="controls">
+                                        <input class="span12" type="text" name="op_sys" value="mac os x"/>
+                                        <div class="error left-align" id="err-name">Please enter operating system.</div>
+                                    </div>
+                                </div>
+                                <div class="control-group">
+                                    <div class="controls">
+                                        <input class="span12" type="text" name="assignee" value=""/>
+                                        <div class="error left-align" id="err-name">Please enter assignee.</div>
+                                    </div>
+                                </div>
+                                <div class="control-group">
+                                    <div class="controls">
+                                        <input class="span12" type="text" name="cc" value="me@email.com" />
+                                        <div class="error left-align" id="err-name">Please enter cc.</div>
+                                    </div>
+                                </div>
+
                                 <div class="control-group">
                                     <div class="controls">
                                         <button id="send-mail" class="message-btn">Submit</button>
@@ -444,12 +451,6 @@
 
                         <div style="margin-left:500px;">
                             <span id='model_result'>
-                                <h3>Predicted priority:  -- </h3>
-                                <h3>Predicted severity: -- </h3>
-                                <h3>Potential duplicates: </h3>
-                                <ul>
-                                    <li>--</li>
-                                </ul>
                             </span>
                         </div>
                     </div>
