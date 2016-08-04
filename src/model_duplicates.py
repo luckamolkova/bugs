@@ -9,14 +9,13 @@ from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.cross_validation import train_test_split
 from scipy import spatial
-from joblib import Parallel, delayed
-import multiprocessing
+from pathos.multiprocessing import ProcessingPool
 
 
 def create_tfidf_vect(X, column='desc_init'):
     tfidf_vect = TfidfVectorizer(input='content', lowercase=True, tokenizer=None,
                                  stop_words='english', use_idf=True,
-                                 max_features=30000, ngram_range=(1, 3))
+                                 max_features=30, ngram_range=(1, 3))
 
     tfidf_vect.fit(X[column])
 
@@ -54,7 +53,8 @@ def generate_non_duplicates(X_dupl, conn):
     return X_non_duplicates
 
 
-def get_candidates(X_id, conn):
+def get_candidates(X_id):
+    conn = connect_db()
     query = '''
         SELECT
             f.id
@@ -78,7 +78,9 @@ def get_candidates(X_id, conn):
         --LIMIT 10
     '''.format(X_id)
 
-    return pd.read_sql_query(query, con=conn)
+    result = pd.read_sql_query(query, con=conn)
+    conn.close()
+    return result
 
 
 def calculate_distances(X_all, tfidf_vect=None, column='desc_init'):
@@ -97,6 +99,22 @@ def calculate_distances(X_all, tfidf_vect=None, column='desc_init'):
             tfidf_vect.transform([row['desc_init']]).toarray()[0],
             tfidf_vect.transform([row['dof_desc_init']]).toarray()[0])
     return X[['same_product', 'same_component', 'desc_dist']]
+
+
+def eval_single_dupl(X):
+    X_candidates = get_candidates(X[1]['id'])
+    index_of_actual_duplicate = X_candidates[X_candidates[
+        'duplicate_of_id'] == X[1]['duplicate_of_id']].index[0]
+
+    X_candidates_distances = calculate_distances(
+        X_candidates, tfidf_vect=tfidf_vect)
+    probas = model.predict_proba(X_candidates_distances)[
+        :, int(model.classes_[np.argmax(model.classes_)])]
+
+    pos_of_actual_duplicate = np.argsort(
+        probas)[::-1].tolist().index(index_of_actual_duplicate)
+
+    return (pos_of_actual_duplicate, len(probas))
 
 if __name__ == "__main__":
     conn = connect_db()
@@ -126,7 +144,7 @@ if __name__ == "__main__":
             AND f.opening > dof.opening
             AND f.opening < dof.closing
         --ORDER BY d.id
-        --LIMIT 10
+        LIMIT 10
     '''
     df_original = pd.read_sql_query(query, con=conn)
     df_original['duplicate'] = 1
@@ -161,18 +179,7 @@ if __name__ == "__main__":
     tfidf_vect = pickle.load(
         open('../data/duplicate_desc_init_vectorizer.pkl', 'rb'))
     print '{}: evaluating model'.format(datetime.datetime.now())
-    results = []
 
+    results = ProcessingPool().map(eval_single_dupl, X_dupl_test.iterrows())
 
-    for rownum, X in X_dupl_test.iterrows():
-        X_candidates = get_candidates(X['id'], conn)
-        index_of_actual_duplicate = X_candidates[X_candidates['duplicate_of_id'] == X['duplicate_of_id']].index[0]
-
-        X_candidates_distances = calculate_distances(X_candidates, tfidf_vect=tfidf_vect)
-        probas = model.predict_proba(X_candidates_distances)[
-            :, int(model.classes_[np.argmax(model.classes_)])]
-
-        pos_of_actual_duplicate = np.argsort(probas)[::-1].tolist().index(index_of_actual_duplicate)
-
-        results.append((pos_of_actual_duplicate, len(probas)))
     print results
