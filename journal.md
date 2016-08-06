@@ -182,15 +182,15 @@ df = df[df['severity_final'] != 'normal']
 
 ```
 ensemble classification report:
-              precision    recall  f1-score   support
+             precision    recall  f1-score   support
 
-    blocker       0.50      0.17      0.25       946
-   critical       0.78      0.75      0.77      8835
-      major       0.55      0.73      0.63      8713
-      minor       0.48      0.38      0.42      4472
-    trivial       0.52      0.29      0.37      1841
+    blocker       0.74      0.29      0.42       957
+   critical       0.80      0.78      0.79      8816
+      major       0.61      0.77      0.68      8770
+      minor       0.59      0.47      0.52      4437
+    trivial       0.68      0.43      0.53      1827
 
-avg / total       0.62      0.62      0.61     24807
+avg / total       0.68      0.68      0.67     24807
 ```
 
 #### Predicting Priority
@@ -205,16 +205,15 @@ df = df[df['priority_final'] != '--']
 **Ensemble**
 
 ```
-ensemble classification report:
-              precision    recall  f1-score   support
+             precision    recall  f1-score   support
 
-         p1       0.47      0.61      0.53      2406
-         p2       0.40      0.49      0.44      2402
-         p3       0.38      0.24      0.29      1522
-         p4       0.24      0.02      0.04       573
-         p5       0.33      0.05      0.09       245
+         p1       0.61      0.74      0.67      2449
+         p2       0.52      0.63      0.57      2378
+         p3       0.57      0.41      0.48      1497
+         p4       0.70      0.18      0.28       574
+         p5       0.70      0.25      0.37       250
 
-avg / total       0.40      0.43      0.40      7148
+avg / total       0.58      0.57      0.55      7148
 ```
 
 ## Evaluate

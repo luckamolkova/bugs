@@ -15,7 +15,7 @@ from pathos.multiprocessing import ProcessingPool
 def create_tfidf_vect(X, column='desc_init'):
     tfidf_vect = TfidfVectorizer(input='content', lowercase=True, tokenizer=None,
                                  stop_words='english', use_idf=True,
-                                 max_features=30, ngram_range=(1, 3))
+                                 max_features=50000, ngram_range=(1, 3))
 
     tfidf_vect.fit(X[column])
 
@@ -102,6 +102,9 @@ def calculate_distances(X_all, tfidf_vect=None, column='desc_init'):
 
 
 def eval_single_dupl(X):
+    conn = connect_db()
+    cur = conn.cursor()
+
     X_candidates = get_candidates(X[1]['id'])
     index_of_actual_duplicate = X_candidates[X_candidates[
         'duplicate_of_id'] == X[1]['duplicate_of_id']].index[0]
@@ -114,6 +117,16 @@ def eval_single_dupl(X):
     pos_of_actual_duplicate = np.argsort(
         probas)[::-1].tolist().index(index_of_actual_duplicate)
 
+    cur.execute("""
+        INSERT INTO duplicate_eval
+        VALUES (%s, %s, %s)
+        """,
+                [X[1]['id'], pos_of_actual_duplicate, len(probas)]
+                )
+    conn.commit()
+    conn.close()
+
+    print '{}: positioned as {} of {}'.format(datetime.datetime.now(), pos_of_actual_duplicate, len(probas))
     return (pos_of_actual_duplicate, len(probas))
 
 if __name__ == "__main__":
@@ -144,7 +157,7 @@ if __name__ == "__main__":
             AND f.opening > dof.opening
             AND f.opening < dof.closing
         --ORDER BY d.id
-        LIMIT 10
+        --LIMIT 10
     '''
     df_original = pd.read_sql_query(query, con=conn)
     df_original['duplicate'] = 1
@@ -176,10 +189,26 @@ if __name__ == "__main__":
         pickle.dump(model, f)
 
     # evaluate model
+    cur = conn.cursor()
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS duplicate_eval (
+        id            bigint NOT NULL,
+        dupl_pos      int,
+        candidates    int
+        );
+    """)
+    conn.commit()
+
     tfidf_vect = pickle.load(
         open('../data/duplicate_desc_init_vectorizer.pkl', 'rb'))
     print '{}: evaluating model'.format(datetime.datetime.now())
 
     results = ProcessingPool().map(eval_single_dupl, X_dupl_test.iterrows())
 
-    print results
+    conn.close()
+
+    pickle_path = '../data/duplicate_eval.pkl'
+    with open(pickle_path, 'w') as f:
+        pickle.dump(results, f)
+
+    print 'DONE!'

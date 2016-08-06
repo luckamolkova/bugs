@@ -6,7 +6,7 @@
     $.Slider = function (options, element) {
         this.$el = $(element);
         this._init(options);
-        
+
     };
 
     $.Slider.defaults = {
@@ -51,7 +51,7 @@
             this.isAnimating = false;
 
             this.bgpositer = 0;
-            
+
 
             this.cssAnimations = Modernizr.cssanimations;
             this.cssTransitions = Modernizr.csstransitions;
@@ -153,7 +153,7 @@
                 $current.stop().animate({
                     left: (d === 'next') ? '-100%' : '100%'
                 }, 1000, function () {
-                    $current.removeClass('da-slide-current');                    
+                    $current.removeClass('da-slide-current');
                 });
 
             }
@@ -201,7 +201,7 @@
         _makeResponsive: function () {
 
             var _self = this;
-                
+
             var w = this.$el.width();
             var h = this.$el.height();
             var nH = h;
@@ -209,7 +209,7 @@
             var xy = this.options.width / this.options.height;
             var nH = w / xy;
                 this.$el.height(Math.ceil(nH));
-                
+
             }else{
                 this.$el.height(Math.ceil(this.options.height));
             }

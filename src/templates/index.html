@@ -10,7 +10,7 @@
     <head>
         <meta charset=utf-8>
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Pluton Theme by BraphBerry.com</title>
+        <title>Bug Triaging</title>
         <!-- Load Roboto font -->
         <link href='http://fonts.googleapis.com/css?family=Roboto:400,300,700&amp;subset=latin,latin-ext' rel='stylesheet' type='text/css'>
         <!-- Load css styles -->
@@ -47,10 +47,9 @@
                     <div class="nav-collapse collapse pull-right">
                         <ul class="nav" id="top-navigation">
                             <li class="active"><a href="#home">Home</a></li>
-                            <li><a href="#clients">Why?</a></li>
-                            <li><a href="#service">Technologies</a></li>
-                            <li><a href="#portfolio">Insights</a></li>
-                            <li><a href="#about">???</a></li>
+                            <li><a href="#clients">Data</a></li>
+                            <li><a href="#insights">Insights</a></li>
+                            <li><a href="#modeling">Modeling</a></li>
                             <li><a href="#price">Results</a></li>
                             <li><a href="#contact">Demo</a></li>
                         </ul>
@@ -71,9 +70,13 @@
                     <!-- Start first slide -->
                     <div class="da-slide">
                         <h2 class="fittext2">Bug Triaging</h2>
-                        <h4>Data Science Project</h4>
-                        <p>In large software projects, hundreds of bug reports can be created daily, many of them containing incoplete, wrong or duplicate information. This project introduces techniques to decrease the amount of duplciates and to automatically assign priority and severity.</p>
+                        <h4>Lucie Klimosova</h4>
+                        <p><br/>
+                        Hundreds of bug reports for large software projects are created daily.<br/>
+                        Many of them contain incoplete, wrong or duplicate information.<br/>
+                        Bug reporters as well as developers would benefit from "smarter" bug reporting system.</p>
                         <a href="http://github.com/lucieklimosova/bugs" target="new" class="da-link button">GitHub Repo</a>
+                        <a style="left:300px;" href="https://www.linkedin.com/in/lucieklimosova" target="new" class="da-link button">LinkedIn Profile</a>
                     </div>
                     <!-- End first slide -->
                 </div>
@@ -87,16 +90,22 @@
                 <div class="triangle"></div>
                 <div class="container">
                     <div class="title">
-                        <h1>Why?</h1>
-                        <p>Explain why this is useful.</p>
+                        <h1>Data</h1>
+                        <p>The Eclipse and Mozilla defect tracking <a href="https://github.com/ansymo/msr2013-bug_dataset" target="new">dataset</a>... <a href="#ref4">[4]</a><!-- Lamkanfi, Pérez and Demeyer--></p>
                     </div>
+                    <p class="testimonial-text-small">
+                        Mozilla subset (mostly Firefox, Thunderbird, Mozilla projects).<br/>
+                        Almost 400,000 bug reports resolved between 1998 and 2013.<br/>
+                        Additional information obtained from <a href="https://wiki.mozilla.org/Bugzilla:REST_API" target="new">Bugzilla API</a> - full description, id of duplicate.<br/>
+                    </p>
+                    <p></p>
                     <div class="row">
                         <div class="span4">
                             <div class="testimonial">
                                 <p>"Assigning severity to bug reports is highly dependent on the expertise of the bug reporters. Novice bug reporter might find it difficult to decide the right severity level."</p>
                                 <div class="whopic">
                                     <div class="arrow"></div>
-                                    <strong>Tian, Lo and Sun
+                                    <strong><!--Tian, Lo and Sun-->
                                         <small>Information retrieval for fine-grained bug severity prediction...
                                         <a href="#ref1">[1]</a></small>
                                     </strong>
@@ -108,7 +117,7 @@
                                 <p>"Correct prioritization of bugs helps in bug fix scheduling/assignment and resource allocation. Failure of this will result in delay of resolving important bugs."</p>
                                 <div class="whopic">
                                     <div class="arrow"></div>
-                                    <strong>Sharma, Bedi, Chaturvedi and Singh
+                                    <strong><!--Sharma, Bedi, Chaturvedi and Singh-->
                                         <small>Predicting the priority of a reported bug...
                                         <a href="#ref2">[2]</a></small>
                                     </strong>
@@ -120,7 +129,7 @@
                                 <p>"Users can, and often do, submit reports describing the same problem. The result is an added workload on the software maintenance engineers who have to ensure that each report is assigned a correct status."</p>
                                 <div class="whopic">
                                     <div class="arrow"></div>
-                                    <strong>Banerjee, Cukic and Adjeroh
+                                    <strong><!--Banerjee, Cukic and Adjeroh-->
                                         <small>Automated duplicate bug report classification...
                                         <a href="#ref3">[3]</a></small>
                                     </strong>
@@ -128,42 +137,59 @@
                             </div>
                         </div>
                     </div>
-                    <p class="testimonial-text">
-                        Improving the bug lifecycle even a little big can have a huge impact.
-                    </p>
+
                 </div>
             </div>
         </div>
         <!-- Client section end -->
 
         <!-- Weird section start -->
-        <div class="section secondary-section">
+        <div class="section secondary-section" id="insights">
             <div class="triangle"></div>
-            <div class="container centered">
-                <p class="large-text">Using Bugzilla dataset.</p>
+            <div class="container">
+                <div class="title">
+                    <h1>Insights</h1>
+                    <p>There are many areas for improvement.</p>
+                </div>
+                <p class="testimonial-text-small" style="color:black; line-height:150%;">
+
+                72% of severity normal, 8% changes over the lifetime.<br/>
+                98% of priority empty, only 9% filled in over the lifetime.<br/>
+                Similar change rate applies to product, component and version.<br/>
+                The bug is assigned to many developers during the lifetime.<br/>
+                </br/>
+                26% bug reports end up being closed as duplicates.<br/>
+                <br/>
+                I have focused on predicting severity and priority and detecting duplicates.
+                </p>
             </div>
         </div>
         <!-- Weird section end -->
 
         <!-- Service section start -->
-        <div class="section primary-section" id="service">
+        <div class="section primary-section" id="modeling">
             <div class="triangle"></div>
             <div class="container">
                 <!-- Start title section -->
                 <div class="title">
-                    <h1>Technologies</h1>
+                    <h1>Modeling</h1>
                     <!-- Section's title goes here -->
-                    <p>Describe technologies used.</p>
+                    <p>Default values (normal severity, empty priority) treated as unlabeled.</p>
                     <!--Simple description for section goes here. -->
                 </div>
                 <div class="row-fluid">
                     <div class="span4">
                         <div class="centered service">
                             <div class="circle-border zoom-in">
-                                <img class="img-circle" src="static/images/Service1.png" alt="service 1">
+                                <img class="img-circle" src="static/images/Service2.png" alt="service 1">
                             </div>
-                            <h3>Python</h3>
-                            <p>Main language, web using Flask</p>
+                            <h3>Severity</h3>
+                            <p>
+                                TfIdf on short descritption<br/>
+                                TfIdf on long description<br/>
+                                Gradient Boosting on other features<br/>
+                                Linear stacking of resutls
+                            </p>
                         </div>
                     </div>
                     <div class="span4">
@@ -171,8 +197,13 @@
                             <div class="circle-border zoom-in">
                                 <img class="img-circle" src="static/images/Service2.png" alt="service 2" />
                             </div>
-                            <h3>Sklearn</h3>
-                            <p>Machine learning stuff, Multinomial Naive Bayes, Gradient Boosting...</p>
+                            <h3>Priority</h3>
+                            <p>
+                                TfIdf on short descritption<br/>
+                                TfIdf on long description<br/>
+                                Gradient Boosting on other features<br/>
+                                Linear stacking of resutls
+                            </p>
                         </div>
                     </div>
                     <div class="span4">
@@ -180,8 +211,13 @@
                             <div class="circle-border zoom-in">
                                 <img class="img-circle" src="static/images/Service3.png" alt="service 3">
                             </div>
-                            <h3>NLP</h3>
-                            <p>TFIDF, experimented with locality sensitive hashing (LHS), doc2vec...</p>
+                            <h3>Duplicates</h3>
+                            <p>
+                                Problem on pairs of observations</br>
+                                Return duplicate high in the search<br/>
+                                Similarity of description and product<br/>
+                                (Experimented with LSH, doc2vec)<br/>
+                            </p>
                         </div>
                     </div>
                 </div>
@@ -189,7 +225,7 @@
         </div>
         <!-- Service section end -->
 
-        <!-- Portfolio section start -->
+<!--
         <div class="section secondary-section " id="portfolio">
             <div class="triangle"></div>
             <div class="container">
@@ -197,7 +233,7 @@
                     <h1>Insights</h1>
                     <p>Looking at Mozilla data, we can confirm the assumptions.</p>
                 </div>
-                <!-- Start details for portfolio project 1 -->
+
                 <div id="single-project">
                     <div id="slidingDiv" class="toggleDiv row-fluid single-project">
                         <div class="span6">
@@ -225,8 +261,7 @@
                             </div>
                         </div>
                     </div>
-                    <!-- End details for portfolio project 1 -->
-                    <!-- Start details for portfolio project 2 -->
+
                     <div id="slidingDiv1" class="toggleDiv row-fluid single-project">
                         <div class="span6">
                             <img src="static/images/Portfolio02.png" alt="project 2">
@@ -253,8 +288,7 @@
                             </div>
                         </div>
                     </div>
-                    <!-- End details for portfolio project 2 -->
-                    <!-- Start details for portfolio project 3 -->
+
                     <div id="slidingDiv2" class="toggleDiv row-fluid single-project">
                         <div class="span6">
                             <img src="static/images/Portfolio03.png" alt="project 3">
@@ -281,7 +315,6 @@
                             </div>
                         </div>
                     </div>
-                    <!-- End details for portfolio project 3 -->
 
                     <ul id="portfolio-grid" class="thumbnails row">
                         <li class="span4 mix web">
@@ -321,9 +354,8 @@
                 </div>
             </div>
         </div>
-        <!-- Portfolio section end -->
 
-        <!-- About us section start -->
+
         <div class="section primary-section" id="about">
             <div class="triangle"></div>
             <div class="container">
@@ -338,39 +370,34 @@
 
             </div>
         </div>
-        <!-- About us section end -->
-
+-->
         <!-- Price section start -->
         <div id="price" class="section secondary-section">
             <div class="triangle"></div>
             <div class="container">
                 <div class="title">
                     <h1>Results</h1>
-                    <p>On par with some previously published research papers. [citaiton needed]</p>
+                    <p>Better than or comparable with previously published researches. <a href="#ref1">[1]</a><a href="#ref5">[5]</a><a href="#ref6">[6]</a></p>
                 </div>
                 <div class="price-table row-fluid">
                     <div class="span4 price-column">
                         <h3>Severity</h3>
                         <ul class="list">
-                            <li>precision: <strong>50%</strong></li>
-                            <li>recall: <strong>50%</strong></li>
-                            <li>F-measure: <strong>27%</strong></li>
+                            <li>accuracy: <strong>68%</strong></li>
+                            <li>off by 1 accuracy: <strong>93%</strong></li>
                         </ul>
                     </div>
                     <div class="span4 price-column">
                         <h3>Priority</h3>
                         <ul class="list">
-                            <li>precision: <strong>50%</strong></li>
-                            <li>recall: <strong>50%</strong></li>
-                            <li>F-measure: <strong>27%</strong></li>
+                            <li>accuracy: <strong>58%</strong></li>
+                            <li>off by 1 accuracy: <strong>87%</strong></li>
                         </ul>
                     </div>
                     <div class="span4 price-column">
                         <h3>Duplicates</h3>
                         <ul class="list">
-                            <li>precision: <strong>50%</strong></li>
-                            <li>recall: <strong>50%</strong></li>
-                            <li>F-measure: <strong>27%</strong></li>
+                            <li>TBD</li>
                         </ul>
                     </div>
                 </div>
@@ -399,43 +426,43 @@
                             <form id="contact-form" onsubmit="return false;">
                                 <div class="control-group">
                                     <div class="controls">
-                                        <input class="span12" type="text" name="short_desc" value="FF crashes when playing video" />
+                                        <input class="span12" type="text" name="short_desc" value="FF crashes when playing video" placeholder="Title" />
                                         <div class="error left-align" id="err-name">Please enter short description.</div>
                                     </div>
                                 </div>
                                 <div class="control-group">
                                     <div class="controls">
-                                        <textarea class="span12" name="desc" placeholder="description">When playing video on this website (http://xxx.com) firefox crashes with unexpected error...</textarea>
+                                        <textarea class="span12" name="desc" placeholder="Description">When playing video on this website (http://xxx.com) firefox crashes with unexpected error...</textarea>
                                         <div class="error left-align" id="err-comment">Please enter description</div>
                                     </div>
                                 </div>
                                 <div class="control-group">
                                     <div class="controls">
-                                        <input class="span12" type="text" name="product" value="firefox" />
+                                        <input class="span12" type="text" name="product" value="firefox" placeholder="Product" />
                                         <div class="error left-align" id="err-name">Please enter product.</div>
                                     </div>
                                 </div>
                                 <div class="control-group">
                                     <div class="controls">
-                                        <input class="span12" type="text" name="component" value="browser" />
+                                        <input class="span12" type="text" name="component" value="browser" placeholder="Component" />
                                         <div class="error left-align" id="err-name">Please enter component.</div>
                                     </div>
                                 </div>
                                 <div class="control-group">
                                     <div class="controls">
-                                        <input class="span12" type="text" name="op_sys" value="mac os x"/>
+                                        <input class="span12" type="text" name="op_sys" value="mac os x" placeholder="Operating system"/>
                                         <div class="error left-align" id="err-name">Please enter operating system.</div>
                                     </div>
                                 </div>
                                 <div class="control-group">
                                     <div class="controls">
-                                        <input class="span12" type="text" name="assignee" value=""/>
+                                        <input class="span12" type="text" name="assignee" value="" placeholder="Assignee"/>
                                         <div class="error left-align" id="err-name">Please enter assignee.</div>
                                     </div>
                                 </div>
                                 <div class="control-group">
                                     <div class="controls">
-                                        <input class="span12" type="text" name="cc" value="me@email.com" />
+                                        <input class="span12" type="text" name="cc" value="me@email.com" placeholder="Cc" />
                                         <div class="error left-align" id="err-name">Please enter cc.</div>
                                     </div>
                                 </div>
@@ -462,12 +489,18 @@
         <!-- Weird section start -->
         <div class="section secondary-section">
             <div class="triangle"></div>
-            <div class="container centered" style="text-align: left;">
-                <span id="ref1">[1] Tian, Y., Lo, D. and Sun, C., 2012, October. Information retrieval based nearest neighbor classification for fine-grained bug severity prediction. In 2012 19th Working Conference on Reverse Engineering (pp. 215-224). IEEE.</span><br/><br/>
+            <div class="container centered" style="text-align: left; font-size: 13px;">
+                <span id="ref1">[1] Tian, Y., Lo, D. and Sun, C., 2012, October. Information retrieval based nearest neighbor classification for fine-grained bug severity prediction. In 2012 19th Working Conference on Reverse Engineering (pp. 215-224). IEEE.</span><br/>
 
-                <span id="ref2">[2] Sharma, M., Bedi, P., Chaturvedi, K.K. and Singh, V.B., 2012, November. Predicting the priority of a reported bug using machine learning techniques and cross project validation. In 2012 12th International Conference on Intelligent Systems Design and Applications (ISDA) (pp. 539-545). IEEE.</span><br/><br/>
+                <span id="ref2">[2] Sharma, M., Bedi, P., Chaturvedi, K.K. and Singh, V.B., 2012, November. Predicting the priority of a reported bug using machine learning techniques and cross project validation. In 2012 12th International Conference on Intelligent Systems Design and Applications (ISDA) (pp. 539-545). IEEE.</span><br/>
 
                 <span id="ref3">[3] Banerjee, S., Cukic, B. and Adjeroh, D., 2012, October. Automated duplicate bug report classification using subsequence matching. In High-Assurance Systems Engineering (HASE), 2012 IEEE 14th International Symposium on (pp. 74-81). IEEE.</span><br/>
+
+                <span id="ref4">[4] Lamkanfi, A., Pérez, J. and Demeyer, S., 2013, May. The eclipse and mozilla defect tracking dataset: a genuine dataset for mining bug information. In Proceedings of the 10th Working Conference on Mining Software Repositories (pp. 203-206). IEEE Press.</span><br/>
+
+                <span id="ref5">[5] Lamkanfi, A., Demeyer, S., Giger, E. and Goethals, B., 2010, May. Predicting the severity of a reported bug. In 2010 7th IEEE Working Conference on Mining Software Repositories (MSR 2010) (pp. 1-10). IEEE.</span><br/>
+
+                <span id="ref6">[6] Menzies, T. and Marcus, A., 2008, September. Automated severity assessment of software defect reports. In Software Maintenance, 2008. ICSM 2008. IEEE International Conference on (pp. 346-355). IEEE.</span>
             </div>
         </div>
         <!-- Weird section end -->

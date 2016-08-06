@@ -95,11 +95,10 @@
     font-weight: normal;
 }
 .da-slide p {
-    width: 50%;
+    width: 90%;
     padding:0px;
-    top: 230px;
-    color: #fff;
-    height: 90px;
+    top: 200px;
+    color: #000;
     overflow: hidden;
     font-weight: 400;
 }
@@ -119,6 +118,7 @@
     text-align: center;
 }
 .da-dots {
+    display: none;
     width: 100%;
     position: absolute;
     text-align: center;

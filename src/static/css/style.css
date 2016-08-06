@@ -358,6 +358,11 @@ p {
     color: #FFF;
     font-weight: lighter;
 }
+.section .title a {
+    font-size: 20px;
+    color: #fff;
+    font-weight: lighter;
+}
 .primary-section {
     background:#181A1C;
 }
@@ -412,7 +417,7 @@ p {
     padding-top:15px;
 }
 .service p {
-    padding:0px 50px;
+    padding:0px 10px;
     height:60px;
 }
 .service img {
@@ -610,6 +615,20 @@ p {
     width:70%;
     line-height:1.3em;
 }
+
+.testimonial-text-small{
+    display:block;
+    font-size:18px;
+    text-align:center;
+    margin:0 auto;
+    margin-top:30px;
+    width:70%;
+    line-height:1.3em;
+}
+
+.testimonial-text a, .testimonial-text-small a {
+    color: #FECE1A;
+}
 /*
 3.5 Price table
 ******************************************************************/
@@ -730,7 +749,6 @@ p {
 }
 .map-wrapper {
     position:relative;
-    height:500px;
 }
 .map-canvas {
     position:absolute;
