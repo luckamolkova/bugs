@@ -1,6 +1,8 @@
+# Bug Triaging - Technical Documentation
+
 ## Getting data
 
-### Setting up PostgreSQL Database
+#### Setting up PostgreSQL Database
 
 - Create new database.
 
@@ -11,7 +13,7 @@ $ psql
 
 - Fill in database connection details (name, username, host) in `util.py`.
 
-### Moving Data from JSON to PostgreSQL
+#### Moving Data from JSON to PostgreSQL
 
 - Download the `v02` of Mozilla and Eclipse Defect Tracking Dataset from [GitHub](https://github.com/ansymo/msr2013-bug_dataset)
 - Set path to the dataset in in `get_json_data.py`.
@@ -38,7 +40,7 @@ The code runs for roughly 40 minutes:
 > 20:05:08: processing /msr2013-bug_dataset/data/v02/mozilla/version.json...
 ```
 
-### Getting Bug Report Descriptions
+#### Getting Bug Report Descriptions
 
 - Run `get_descriptions.py` from terminal as many times as needed (it gets 100,000 descriptions in one go):
 
@@ -48,7 +50,7 @@ $ time python get_descriptions.py
 
 Bugzilla stores long description as a first comment to the bug report.
 
-The code goes through all bug reports in POstgreSQL database that do not have description yet and tries to get it from bugzilla.mozilla.org API (request is formatted as https://bugzilla.mozilla.org/rest/bug/707428/comment).
+The code goes through all bug reports in PostgreSQL database that do not have description yet and tries to get it from bugzilla.mozilla.org API (request is formatted as https://bugzilla.mozilla.org/rest/bug/707428/comment).
 
 The first comment, its time and bug_id are stored in table called `descriptions`. Threading is used to speed up the process. Data is commited after every 100 descriptions (roughly 15 seconds, depending on internet connection speed).
 
@@ -70,6 +72,9 @@ Overall there are roughly 400,000 bug reports; it should take roughly 17 hours t
 
 ## Data Preprocessing
 
+- Only keep bug reports where the long description was successfully recieved from Bugzilla API.
+- Only keep "closed" bug reports - final status is Resolved, Closed or Verified.
+- Get rid of enhancements. (Bugzilla allows users to request new features, which technically do not represent real bugs. Therefore, we do not consider reports where the severity attribute is set to enhancement as this category is reserved for feature requests.)
 - Run `data_preprocessing.py` from terminal:
 
 ```
@@ -88,6 +93,18 @@ The code runs roughly 3 minutes. Table named `final` is created in the database.
 > 15:33:26: creating final table...
 ```
 
+#### Getting Bug Report "duplicate of"
+
+- Run `get_duplicates.py` from terminal:
+
+```
+$ time python get_duplicates.py
+```
+
+The code goes through all bug reports in the final table that were closed as duplicates and tries to get `dupe_of` from bugzilla.mozilla.org API (request is formatted as https://bugzilla.mozilla.org/rest/bug/707428?include_fields=dupe_of).
+
+The results are stored in table named `duplicates`.
+
 ## Data Exploration
 
 - Code and detailed results are in `data_exploration.ipynb`.
@@ -96,7 +113,7 @@ The code runs roughly 3 minutes. Table named `final` is created in the database.
 - opening: from 1996-03-11 to 2013-01-01
 - closing: from 1998-08-27 to 2013-01-01
 
-#### Reassignments
+**Reassignments**
 
 ```
 priority:    6 unique values, 27,319  (8.79%) bugs reassigned
@@ -105,19 +122,13 @@ component: 730 unique values, 67,343 (21.66%) bugs reassigned
 product:    69 unique values, 24,568  (7.90%) bugs reassigned
 ```
 
-**Priority** - Most of the time empty, not easily predictable.
-
-**Severity** - Worth trying.
-
-**Component** - Too many unique components, not easily predictable.
-
 **Product** - 69 unique values is still a little bit too much. Try to keep top 7 products ('core', 'firefox', 'thunderbird', 'bugzilla', 'browser', 'webtools', 'psm') and 'other'?
 
 ```
 product:     8 unique values, 25,563  (7.89%) bugs reassigned
 ```
 
-#### Duplicates
+**Duplicates**
 
 26% bug reports end up being closed as duplicates:
 
@@ -133,93 +144,48 @@ moved              14
                     4
 ```
 
-#### Resolution Time
+## Modeling
 
-- Calculated as `reports.opening` - last(`resolution.when`)
-
-```
-mean  206 days 18:34:58.243462
-std   451 days 15:06:01.450312    
-min     0 days 00:00:00 
-25%     0 days 18:38:06.500000  
-50%    16 days 12:30:30    
-75%   183 days 09:30:08.500000    
-max  4767 days 04:37:06
-```
-
-- We can split the data into buckets based on number of days as follows:
-
-```
-day     0-1 days  14,804
-week    1-7 days  35,255
-month  7-30 days  40,117
-year 30-365 days  82,785
-more   365+ days  53,125
-```
-
-## Data Preparation and Modeling
-
-- Run `pickle_bug_pipelines.py` from terminal:
+- Run `pickle_bug_pipelines.py` and `pickle_duplicate_pipeline.py` from terminal:
 
 ```
 $ time python pickle_bug_pipelines.py
+$ time python pickle_duplicate_pipeline.py
 ```
 
-- Only keep stuff with description
-- Only keep closed (././.)
-- Get rid of enhancements (Bugzilla allows users to request new features, which technically do not represent real bugs. Therefore, we do not consider reports where the severity attribute is set to enhancement as this category is reserved for feature requests.)
+Three files should be pickled into data directory. All three of them are needed to run the web application:
+- `severity_final_pipeline.pkl`
+- `priority_final_pipeline.pkl`
+- `duplicate_pipeline.pkl`
 
-#### Predicting Severity
+During the process of pickling, the pipelines are fitted, the models are trained (including TfIdf and Count vectorizers) and saved as part of the pickled pipeline. The pipelines then can be used for predictions in the web app. A few things that happen worth mentioning for specific models.
 
-Get rid of enhancements and normal (defaults)
-       
-```
-df = df[df['severity_final'] != 'enhancement']
-df = df[df['severity_final'] != 'normal']
-```
+**Severity and Priority**
 
-**Ensemble**
+- Get rid of defaults (normal for severity, empty and -- for priority).
+- Train test split.
+- TfIdf vectorize short and long description.
+- Count vectorize categorical attributes - product, component, operating system.
+- Train three models in the first level using K-fold cross validation.
+- Train the final model on probability predictions of previous model - using the data from K-fold validation that were not used for training the three models to avoid leakage.
 
-```
-ensemble classification report:
-             precision    recall  f1-score   support
+**Duplicates**
 
-    blocker       0.74      0.29      0.42       957
-   critical       0.80      0.78      0.79      8816
-      major       0.61      0.77      0.68      8770
-      minor       0.59      0.47      0.52      4437
-    trivial       0.68      0.43      0.53      1827
-
-avg / total       0.68      0.68      0.67     24807
-```
-
-#### Predicting Priority
-
-Get rid of empty and -- (defaults)
-
-```
-df = df[df['priority_final'] != '']
-df = df[df['priority_final'] != '--']
-```
-
-**Ensemble**
-
-```
-             precision    recall  f1-score   support
-
-         p1       0.61      0.74      0.67      2449
-         p2       0.52      0.63      0.57      2378
-         p3       0.57      0.41      0.48      1497
-         p4       0.70      0.18      0.28       574
-         p5       0.70      0.25      0.37       250
-
-avg / total       0.58      0.57      0.55      7148
-```
-
-## Evaluate
-
-TODO
+- Only use bug reports that are known to be duplicates.
+- Train test split.
+- Generate pairs of observations. Pair each bug report with its real duplicate (target 1) and with 7 non-duplicates (label 0).
+- Calculate cosine distances on TfIdf of short and long description, create features indicating whether the pair of bug reports has the same component, operating system and reporter.
+- Train and pickle the model.
+- Evaluation is optional. When you uncomment the line to evaluate the model, a table `duplicate_eval` will be created. For each bug report in the test set a record will be inserted with total nuber of candidates considered and with the position of actual duplicate amongst those candidates.
 
 ## Deployment
 
-- See the Flask app (models still need to be incorporated).
+- Make sure the pickled pipelineas are in data directory.
+- Start the flask app from terminal:
+
+```
+$ python app.py
+```
+
+- Access the app from `http://localhost:5353`.
+- As of now (and for next few months) the app can be accessed from [bugtriaging.com](http://bugtriaging.com).
