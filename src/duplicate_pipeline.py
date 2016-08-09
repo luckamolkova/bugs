@@ -59,21 +59,25 @@ class DuplicatePipeline(object):
         Returns:
             dataframe: Top n best matches.
         """
-        X_candidates_tmp = self.get_candidates(X.iloc[0]['product_init'], X.iloc[0]['opening'])
+        try:
+            X_candidates_tmp = self.get_candidates(X.iloc[0]['product_init'], X.iloc[0]['opening'])
 
-        # cross join bug report with all candidates
-        X['tmp_key'] = 1
-        X_candidates_tmp['tmp_key'] = 1
-        X_candidates = pd.merge(X, X_candidates_tmp, on='tmp_key')
-        X_candidates.drop(['tmp_key'], axis=1, inplace=True)
+            # cross join bug report with all candidates
+            X['tmp_key'] = 1
+            X_candidates_tmp['tmp_key'] = 1
+            X_candidates = pd.merge(X, X_candidates_tmp, on='tmp_key')
+            X_candidates.drop(['tmp_key'], axis=1, inplace=True)
 
-        X_candidates_distances = self.calculate_distances(
-            X_candidates, train=False)
-        probas = self.model.predict_proba(X_candidates_distances)[
-            :, int(self.model.classes_[np.argmax(self.model.classes_)])]
+            X_candidates_distances = self.calculate_distances(
+                X_candidates, train=False)
+            probas = self.model.predict_proba(X_candidates_distances)[
+                :, int(self.model.classes_[np.argmax(self.model.classes_)])]
 
-        pos_of_topn = np.argsort(probas)[-topn:][::-1]
-        return X_candidates.iloc[pos_of_topn]
+            pos_of_topn = np.argsort(probas)[-topn:][::-1]
+            return X_candidates.iloc[pos_of_topn]
+        except:
+            # there is not enough candidate tickets to return
+            return pd.DataFrame([])
 
     def evaluate(self, X_test):
         """Evaluates the model in parallel, stores result in db."""
@@ -151,34 +155,6 @@ class DuplicatePipeline(object):
             Make it work for bug report not in db (unknown id).
         """
         conn = connect_db()
-        # query = '''
-        #     SELECT
-        #         f.id
-        #         , dof.id AS duplicate_of_id
-        #         , f.short_desc_init
-        #         , f.desc_init
-        #         , f.product_init
-        #         , f.component_init
-        #         , f.reporter
-        #         , f.op_sys_init
-        #         , dof.short_desc_init AS dof_short_desc_init
-        #         , dof.desc_init AS dof_desc_init
-        #         , dof.product_init AS dof_product_init
-        #         , dof.component_init AS dof_component_init
-        #         , dof.reporter AS dof_reporter
-        #         , dof.op_sys_init AS dof_op_sys_init
-        #     FROM final f
-        #         CROSS JOIN final dof
-        #     WHERE 1 = 1
-        #         AND f.id = {}
-        #         -- original should be open when duplicate is created
-        #         AND f.opening > dof.opening
-        #         AND f.opening < dof.closing
-        #         AND f.product_init = dof.product_init
-        #     --ORDER BY dof.id
-        #     --LIMIT 10
-        # '''.format(X_id)
-
         query = '''
             SELECT
                 dof.id AS duplicate_of_id

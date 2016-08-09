@@ -17,13 +17,7 @@ def index():
 def model():
     '''Returns priority, severity and potential duplicates.'''
 
-    # product = request.args.get('product')
-    # component = request.args.get('component')
-    # assignee = request.args.get('assignee')
-    # cc = request.args.get('cc')
-    # short_desc = request.args.get('short_desc')
-    # desc = request.args.get('desc')
-
+    # format data for severity and priority predictions
     X = pd.DataFrame([[
         request.args.get('assignee'),
         request.args.get('cc'),
@@ -47,21 +41,45 @@ def model():
     X_priority = create_features(X.copy(deep=True), target='priority_final')
     X_priority.pop('priority_final')
 
-    # Return formatted string
-    html = '''
+    # return formatted string with predictions
+    html1 = '''
         <h3>Predicted priority:  {} </h3>
         <h3>Predicted severity: {} </h3>
+    '''
+
+    # format data for duplicates prediction
+    X_dupl = pd.DataFrame([[
+        request.args.get('short_desc'),
+        request.args.get('desc'),
+        request.args.get('product'),
+        request.args.get('component'),
+        '12345', # reporter
+        request.args.get('op_sys'),
+        '2012-12-10 21:05:10']]) # opening
+
+    X_dupl.columns = ['short_desc_init', 'desc_init', 'product_init',
+        'component_init', 'reporter', 'op_sys_init', 'opening']
+
+    duplicates = duplicate_model.predict(X_dupl)
+
+    # return formatted string with predictions
+    if duplicates.shape[0] >= 3:
+    html2 = '''
         <h3>Potential duplicates: </h3>
         <ul>
-            <li>{}</li>
-            <li>{}</li>
-            <li>{}</li>
+            <li>{}: {}</li>
+            <li>{}: {}</li>
+            <li>{}: {}</li>
         </ul>
-        '''.format(
-            priority_model.predict(X_priority)[0],
-            severity_model.predict(X_severity)[0],
-            'x', 'y', 'z')
-    return str(html)
+    '''.format(
+        duplicates.iloc[0]['duplicate_of_id'], duplicates.iloc[0]['dof_short_desc_init'],
+        duplicates.iloc[1]['duplicate_of_id'], duplicates.iloc[1]['dof_short_desc_init'],
+        duplicates.iloc[2]['duplicate_of_id'], duplicates.iloc[2]['dof_short_desc_init']
+    )
+    else:
+        html2 = '<h3>Potential duplicates: None found. Try different product.</h3>'
+
+    return str(html1) + str(html2)
 
 
 if __name__ == '__main__':
@@ -71,6 +89,8 @@ if __name__ == '__main__':
         open('../data/severity_final_pipeline.pkl', 'r'))
     priority_model = pickle.load(
         open('../data/priority_final_pipeline.pkl', 'r'))
+    duplicate_model = pickle.load(
+        open('../data/duplicate_pipeline.pkl', 'r'))
 
     # start Flask app
     app.run(host='0.0.0.0', port=5353, debug=True, threaded=True)

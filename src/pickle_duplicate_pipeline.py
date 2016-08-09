@@ -44,7 +44,7 @@ if __name__ == '__main__':
             AND f.product_init = 'firefox'
             AND f.product_init = dof.product_init
         --ORDER BY d.id
-        LIMIT 10
+        --LIMIT 10
     '''
     df_original = pd.read_sql_query(query, con=conn)
     df_original['duplicate'] = 1
