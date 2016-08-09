@@ -106,14 +106,6 @@ class BugPipeline(object):
                 y_ensem = y_test.values
             fold += 1
 
-        pickle_path = '../data/X_ensem.pkl'
-        with open(pickle_path, 'w') as f:
-            pickle.dump(X_ensem, f)
-
-        pickle_path = '../data/y_ensem.pkl'
-        with open(pickle_path, 'w') as f:
-            pickle.dump(y, f)
-
         # Linear stacking
         print '{}: training ensemble'.format(datetime.datetime.now())
         self.ensem_gb_model.fit(X_ensem, y)

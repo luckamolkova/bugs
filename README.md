@@ -1,52 +1,57 @@
 # Bug Triaging
 
-Data Science Project for [Galvanize](http://www.galvanize.com/), Seattle, August 2016
-Lucie Klimosova ([LinkedIn](https://www.linkedin.com/in/lucieklimosova))
+- Data Science Project for [Galvanize](http://www.galvanize.com/), Seattle, August 2016.
+- Lucie Klimosova ([LinkedIn](https://www.linkedin.com/in/lucieklimosova)).
+- See the web application live on [bugtriaging.com](http://bugtriaging.com).
 
-Hundreds of bug reports for large software projects are created daily.
-Many of them contain incomplete, wrong or duplicate information.
-Bug reporters as well as developers would benefit from "smarter" bug reporting system.
+**Motivation**
+
+Hundreds of bug reports for large software projects are created daily; many of them contain incomplete, wrong or duplicate information.
+
+Bug reporters as well as developers would benefit from "smarter" bug reporting system. This projects shows that severity and priority predictions can be assigned to tickets automatically. It also attempts to prevent duplicate creation by suggesting similar bug reports.
 
 ## Data
 
 The Eclipse and Mozilla defect tracking dataset... [1]
-- Mozilla subset (mostly Firefox, Thunderbird, Mozilla projects).
+- Mozilla subset (mostly Firefox, Thunderbird and Mozilla projects).
 - Almost 400,000 bug reports resolved between 1998 and 2013.
-- Additional information obtained from Bugzilla API - full description, id of duplicate.
+- Additional information obtained from [Bugzilla API](https://wiki.mozilla.org/Bugzilla:REST_API)
+  - Full description - stored as first comment ([API call](https://bugzilla.mozilla.org/rest/bug/707428/comment))
+  - ID of duplicate ([API call](https://bugzilla.mozilla.org/rest/bug/76103?include_fields=dupe_of))
+
+The bug report is provided as a series of incremental updates appearing during its lifetime. It allows to reconstruct how the bug report looked like at a time of creation and what were the final values when it was closed.
 
 ## Insights
 
 There are many areas for improvement.
-72% of severity normal, 8% changes over the lifetime.
-98% of priority empty, only 9% filled in over the lifetime.
-Similar change rate applies to product, component and version.
-The bug is assigned to many developers during the lifetime.
+- 72% of severity normal (default), 8% changes over the lifetime.
+- 98% of priority empty (default), only 9% filled in over the lifetime.
+- Similar change rate applies to product, component and version.
+- The bug is assigned to many developers during the lifetime.
+- 26% bug reports end up being closed as duplicates.
 
-26% bug reports end up being closed as duplicates.
-
-I have focused on predicting severity and priority and detecting duplicates.
-
-## Modeling
+## Modeling and Results
 
 ### Severity and Priority
 
 Default values (normal severity, empty priority) treated as unlabeled.
-TfIdf on short descritption
-TfIdf on long description
-Gradient Boosting on other features
-Linear stacking of resutls
 
-### Duplicates
-Problem on pairs of observations
-Return duplicate high in the search
-Similarity of description and product
-(Experimented with LSH, doc2vec)
+Three different models trained:
 
-## Results
+1. Multinomial Naive Bayes on TfIdf of short descritption (250 characters).
+2. Multinomial Naive Bayes on TfIdf of long description.
+3. Gradient Boosting on other features, including
+  - "Skill" of the reporter - how many bug reports she has created before.
+  - How many people are on the cc list.
+  - Is the bug report assigned immediately.
+  - etc.
 
+Linear stacking used to combine the probability predictions of the three models:
+
+- Gradient Boosting on predicted probabilities for each class.
+
+**Severity Results**
 Better than or comparable with previously published researches. [2][3][4]
-
-## Severity
 
 class | precision  |  recall | f1-score |  support
 ---|---|---|---|---
@@ -57,7 +62,7 @@ class | precision  |  recall | f1-score |  support
     trivial   |    0.68  |   0.43  |   0.53   |  1827
 **avg / total**   |   **0.68**   |  **0.68**   |  **0.67**    | 24807
 
-## Priority
+**Priority Results**
 
 class | precision  |  recall | f1-score |  support
 ---|---|---|---|---
@@ -68,12 +73,48 @@ class | precision  |  recall | f1-score |  support
          p5  |    0.70  |   0.25  |   0.37   |   250
 **avg / total**  |    **0.58**  |   **0.57**  |   **0.55**   |  7148
 
-## Duplicates
+### Duplicates
 
-top 3: 10%
-top 10: 15%
-top 50: 26%
-7,000 candidates on average
+Problem on pairs of observations rather than single observation.
+- Typically highly imbalanced - each bug report has one or two duplicates and there are thousands or more non-duplicates for it.
+- The goal is to return the actual duplicate as high in the search as possible.
+
+Assumptions that help reduce the number of potential candidates searched:
+- The original should exist and should not be resolved at the time of duplicate creation.
+- Both the duplicate and the original are reported for the same product.
+
+Features used:
+- Cosine similarity of TfIdf of short descritption (250 characters).
+- Cosine similarity of TfIdf of long descritption.
+- Similarity of component and operating system.
+- Reporter (the assumption is that the same person is not likely to report the same thing twice).
+
+I have also experimented with locality sensitive hashing (LSH) implmented in [NearPy](https://github.com/pixelogik/NearPy) and [doc2vec](https://radimrehurek.com/gensim/models/doc2vec.html) and [text summarization](http://rare-technologies.com/text-summarization-with-gensim/) implemented in gensim to see if it could be used instead of simple cosine similarity on TfIdf matrices but my results were not better.
+
+**Duplicate Results**
+
+- Actual duplicate returned in top 3: **10%**
+- Actual duplicate returned in top 10: **15%**
+- Actual duplicate returned in top 50: **26%**
+
+The results are not impressive but it is important to keep in mind that there were 7,000 candidates considered on average. The model would perform much better on smaller set of observations (hundreds to thousands of bug reports).
+
+## Deployment
+
+To learn more about the code and how to use it, look at [technical documentation](src/technical_documentation.md).
+
+## Next Steps
+
+Improve existing predictions:
+
+- Explore more features available in the API (newer bug reports have information including keywords or votes).
+- Improve the duplicate search, spend more time on text similarity detection.
+
+Make the bug triaging solution more complete by adding more functionality:
+
+- Predict component and product.
+- Suggest assignees.
+- Predict resolution time.
 
 **References**
 
