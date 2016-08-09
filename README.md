@@ -6,9 +6,9 @@
 
 **Motivation**
 
-Hundreds of bug reports for large software projects are created daily; many of them contain incomplete, wrong or duplicate information.
+Large software projects can produce hundreds of bug reports every day. Many of these reports contain incomplete, incorrect, or redundant information.
 
-Bug reporters as well as developers would benefit from "smarter" bug reporting system. This projects shows that severity and priority predictions can be assigned to tickets automatically. It also attempts to prevent duplicate creation by suggesting similar bug reports.
+Bug reporters and developers would benefit from a "smarter" bug reporting system. This projects shows that severity and priority predictions can be assigned to tickets automatically. It also attempts to prevent duplicate creation by suggesting similar bug reports.
 
 ## Data
 
@@ -19,7 +19,7 @@ The Eclipse and Mozilla defect tracking dataset... [1]
   - Full description - stored as first comment ([API call](https://bugzilla.mozilla.org/rest/bug/707428/comment))
   - ID of duplicate ([API call](https://bugzilla.mozilla.org/rest/bug/76103?include_fields=dupe_of))
 
-The bug report is provided as a series of incremental updates appearing during its lifetime. It allows to reconstruct how the bug report looked like at a time of creation and what were the final values when it was closed.
+The bug report is provided as a series of incremental updates appearing during its lifetime. Thus, the report can be analyzed both at the time of creation and at the time of closure.
 
 ## Insights
 
@@ -34,9 +34,9 @@ There are many areas for improvement.
 
 ### Severity and Priority
 
-Default values (normal severity, empty priority) treated as unlabeled.
+Default values (normal severity, empty priority) were treated as unlabeled.
 
-Three different models trained:
+Three different models were trained:
 
 1. Multinomial Naive Bayes on TfIdf of short descritption (250 characters).
 2. Multinomial Naive Bayes on TfIdf of long description.
@@ -46,7 +46,7 @@ Three different models trained:
   - Is the bug report assigned immediately.
   - etc.
 
-Linear stacking used to combine the probability predictions of the three models:
+Linear stacking was used to combine the probability predictions of the three models:
 
 - Gradient Boosting on predicted probabilities for each class.
 
@@ -76,8 +76,8 @@ class | precision  |  recall | f1-score |  support
 
 ### Duplicates
 
-Problem on pairs of observations rather than single observation.
-- Typically highly imbalanced - each bug report has one or two duplicates and there are thousands or more non-duplicates for it.
+This problem exists for pairs of observations rather than for a single observation.
+- Typically highly imbalanced - each bug report has one or two duplicates and there are thousands or more non-duplicates for every set of duplicates.
 - The goal is to return the actual duplicate as high in the search as possible.
 
 Assumptions that help reduce the number of potential candidates searched:
