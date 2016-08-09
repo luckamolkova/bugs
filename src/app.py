@@ -22,10 +22,10 @@ def model():
         request.args.get('assignee'),
         request.args.get('cc'),
         request.args.get('product'),
-        'trunk', # version
+        'trunk',  # version
         request.args.get('component'),
-        request.args.get('op_sys'), # op_sys
-        7, # reporter_bug_cnt
+        request.args.get('op_sys'),  # op_sys
+        7,  # reporter_bug_cnt
         request.args.get('desc'),
         request.args.get('short_desc'),
         '-', '-']])  # priority_final and severity_final left blank
@@ -45,7 +45,7 @@ def model():
     html1 = '''
         <h3>Predicted priority:  {} </h3>
         <h3>Predicted severity: {} </h3>
-    '''
+    '''.format(priority_model.predict(X_priority)[0], severity_model.predict(X_severity)[0])
 
     # format data for duplicates prediction
     X_dupl = pd.DataFrame([[
@@ -53,29 +53,32 @@ def model():
         request.args.get('desc'),
         request.args.get('product'),
         request.args.get('component'),
-        '12345', # reporter
+        '12345',  # reporter
         request.args.get('op_sys'),
-        '2012-12-10 21:05:10']]) # opening
+        '2012-12-10 21:05:10']])  # opening
 
     X_dupl.columns = ['short_desc_init', 'desc_init', 'product_init',
-        'component_init', 'reporter', 'op_sys_init', 'opening']
+                      'component_init', 'reporter', 'op_sys_init', 'opening']
 
     duplicates = duplicate_model.predict(X_dupl)
 
     # return formatted string with predictions
     if duplicates.shape[0] >= 3:
-    html2 = '''
-        <h3>Potential duplicates: </h3>
-        <ul>
-            <li>{}: {}</li>
-            <li>{}: {}</li>
-            <li>{}: {}</li>
-        </ul>
-    '''.format(
-        duplicates.iloc[0]['duplicate_of_id'], duplicates.iloc[0]['dof_short_desc_init'],
-        duplicates.iloc[1]['duplicate_of_id'], duplicates.iloc[1]['dof_short_desc_init'],
-        duplicates.iloc[2]['duplicate_of_id'], duplicates.iloc[2]['dof_short_desc_init']
-    )
+        html2 = '''
+            <h3>Potential duplicates: </h3>
+            <ul>
+                <li>{}: {}</li>
+                <li>{}: {}</li>
+                <li>{}: {}</li>
+            </ul>
+        '''.format(
+            duplicates.iloc[0]['duplicate_of_id'], duplicates.iloc[
+                0]['dof_short_desc_init'],
+            duplicates.iloc[1]['duplicate_of_id'], duplicates.iloc[
+                1]['dof_short_desc_init'],
+            duplicates.iloc[2]['duplicate_of_id'], duplicates.iloc[
+                2]['dof_short_desc_init']
+        )
     else:
         html2 = '<h3>Potential duplicates: None found. Try different product.</h3>'
 
