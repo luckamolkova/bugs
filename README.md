@@ -51,6 +51,7 @@ Linear stacking used to combine the probability predictions of the three models:
 - Gradient Boosting on predicted probabilities for each class.
 
 **Severity Results**
+
 Better than or comparable with previously published researches. [2][3][4]
 
 class | precision  |  recall | f1-score |  support
@@ -119,6 +120,9 @@ Make the bug triaging solution more complete by adding more functionality:
 **References**
 
 [1] Lamkanfi, A., Pérez, J. and Demeyer, S., 2013, May. The eclipse and mozilla defect tracking dataset: a genuine dataset for mining bug information. In Proceedings of the 10th Working Conference on Mining Software Repositories (pp. 203-206). IEEE Press.
+
 [2] Tian, Y., Lo, D. and Sun, C., 2012, October. Information retrieval based nearest neighbor classification for fine-grained bug severity prediction. In 2012 19th Working Conference on Reverse Engineering (pp. 215-224). IEEE.
+
 [3] Lamkanfi, A., Demeyer, S., Giger, E. and Goethals, B., 2010, May. Predicting the severity of a reported bug. In 2010 7th IEEE Working Conference on Mining Software Repositories (MSR 2010) (pp. 1-10). IEEE.
+
 [4] Menzies, T. and Marcus, A., 2008, September. Automated severity assessment of software defect reports. In Software Maintenance, 2008. ICSM 2008. IEEE International Conference on (pp. 346-355). IEEE.
