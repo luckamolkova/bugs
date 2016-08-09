@@ -4,7 +4,7 @@ Data Science Project for [Galvanize](http://www.galvanize.com/), Seattle, August
 Lucie Klimosova ([LinkedIn](https://www.linkedin.com/in/lucieklimosova))
 
 Hundreds of bug reports for large software projects are created daily.
-Many of them contain incoplete, wrong or duplicate information.
+Many of them contain incomplete, wrong or duplicate information.
 Bug reporters as well as developers would benefit from "smarter" bug reporting system.
 
 ## Data
@@ -70,7 +70,10 @@ class | precision  |  recall | f1-score |  support
 
 ## Duplicates
 
-TBD
+top 3: 10%
+top 10: 15%
+top 50: 26%
+7,000 candidates on average
 
 **References**
 
