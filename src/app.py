@@ -15,7 +15,7 @@ def index():
 
 @app.route('/model', methods=['GET', 'POST'])
 def model():
-    '''Returns priority, severity and potential duplicates.'''
+    """Returns html with predictions (priority, severity and potential duplicates)."""
 
     # format data for severity and priority predictions
     X = pd.DataFrame([[
@@ -28,7 +28,7 @@ def model():
         7,  # reporter_bug_cnt
         request.args.get('desc'),
         request.args.get('short_desc'),
-        '-', '-']])  # priority_final and severity_final left blank
+        '-', '-']])  # priority_final and severity_final left blank, to be predicted
 
     X.columns = ['assigned_to_init', 'cc_init', 'product_init',
                  'version_init', 'component_init', 'op_sys_init',
@@ -41,11 +41,11 @@ def model():
     X_priority = create_features(X.copy(deep=True), target='priority_final')
     X_priority.pop('priority_final')
 
-    # return formatted string with predictions
+    # format string with priority and severity predictions
     html1 = '''
         <h3>Predicted priority:  {} </h3>
         <h3>Predicted severity: {} </h3>
-    '''.format(priority_model.predict(X_priority)[0], severity_model.predict(X_severity)[0])
+    '''.format(priority_model.predict(X_priority)[0].upper(), severity_model.predict(X_severity)[0])
 
     # format data for duplicates prediction
     X_dupl = pd.DataFrame([[
@@ -62,25 +62,31 @@ def model():
 
     duplicates = duplicate_model.predict(X_dupl)
 
-    # return formatted string with predictions
+    # format string with duplicate predictions
     if duplicates.shape[0] >= 3:
         html2 = '''
             <h3>Potential duplicates: </h3>
             <ul>
-                <li>{}: {}</li>
-                <li>{}: {}</li>
-                <li>{}: {}</li>
+                <li><a style="color: #fff;" href="https://bugzilla.mozilla.org/show_bug.cgi?id={dof0}" target="new">{dof0}</a> <dd>{desc0}</dd></li>
+                <li><a style="color: #fff;" href="https://bugzilla.mozilla.org/show_bug.cgi?id={dof1}" target="new">{dof1}</a> <dd>{desc1}</dd></li>
+                <li><a style="color: #fff;" href="https://bugzilla.mozilla.org/show_bug.cgi?id={dof2}" target="new">{dof2}</a> <dd>{desc2}</dd></li>
             </ul>
         '''.format(
-            duplicates.iloc[0]['duplicate_of_id'], duplicates.iloc[
-                0]['dof_short_desc_init'],
-            duplicates.iloc[1]['duplicate_of_id'], duplicates.iloc[
-                1]['dof_short_desc_init'],
-            duplicates.iloc[2]['duplicate_of_id'], duplicates.iloc[
-                2]['dof_short_desc_init']
+            dof0 = duplicates.iloc[0]['duplicate_of_id'],
+            desc0 = duplicates.iloc[0]['dof_short_desc_init'],
+            dof1 = duplicates.iloc[1]['duplicate_of_id'],
+            desc1 = duplicates.iloc[1]['dof_short_desc_init'],
+            dof2 = duplicates.iloc[2]['duplicate_of_id'],
+            desc2 = duplicates.iloc[2]['dof_short_desc_init']
         )
     else:
-        html2 = '<h3>Potential duplicates: None found. Try different product.</h3>'
+        html2 = '''
+            <h3>Potential duplicates: </h3>
+            <ul>
+                <li>None found. Only bug reports in the same product that were open as of 2012-12-10
+                are considered by this search. Try produduct Firefox, Bugzilla or Thunderbird.</li>
+            </ul>
+        '''
 
     return str(html1) + str(html2)
 
@@ -96,4 +102,4 @@ if __name__ == '__main__':
         open('../data/duplicate_pipeline.pkl', 'r'))
 
     # start Flask app
-    app.run(host='0.0.0.0', port=5353, debug=True, threaded=True)
+    app.run(host='0.0.0.0', port=5353, debug=False, threaded=True)

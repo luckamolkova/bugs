@@ -61,7 +61,6 @@ class BugPipeline(object):
         Returns:
             None.
         """
-
         X = X_data.copy(deep=True)
         X.set_index([range(X.shape[0])], inplace=True)
         y = y_data.copy(deep=True)
@@ -131,20 +130,20 @@ class BugPipeline(object):
         X = X_data.copy(deep=True)
 
         # NLP description
-        print '{}: NLP description transform and predict'.format(datetime.datetime.now())
+        # print '{}: NLP description transform and predict'.format(datetime.datetime.now())
         desc_tfidf = self.desc_vect.transform(X.pop('desc_init'))
         desc_y_pred = self.desc_nb_model.predict(desc_tfidf)
         # print 'desc classification report: \n {}'.format(classification_report(y, desc_y_pred))
 
         # NLP short description
-        print '{}: NLP short description transform and predict'.format(datetime.datetime.now())
+        # print '{}: NLP short description transform and predict'.format(datetime.datetime.now())
         short_desc_tfidf = self.short_desc_vect.transform(
             X.pop('short_desc_init'))
         short_desc_y_pred = self.short_desc_nb_model.predict(short_desc_tfidf)
         # print 'short desc classification report: \n {}'.format(classification_report(y, short_desc_y_pred))
 
         # Non-textual features
-        print '{}: Non-textual features transform and predict'.format(datetime.datetime.now())
+        # print '{}: Non-textual features transform and predict'.format(datetime.datetime.now())
         X = self.vectorize_features(X, train=False)
 
         feat_y_pred = self.feat_gb_model.predict(X)

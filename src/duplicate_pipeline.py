@@ -43,10 +43,6 @@ class DuplicatePipeline(object):
         print '{}: training model'.format(datetime.datetime.now())
         self.model.fit(X_distances, y_all)
 
-        # print '{}: pickling model'.format(datetime.datetime.now())
-        # pickle_path = '../data/duplicate_model.pkl'
-        # with open(pickle_path, 'w') as f:
-        #     pickle.dump(model, f)
         return
 
     def predict(self, X, topn=3):
